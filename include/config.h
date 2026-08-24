@@ -1,0 +1,48 @@
+#pragma once
+
+#include <Arduino.h>
+
+// ---------------------------------------------------------------------------
+// Fixed test configuration
+// ---------------------------------------------------------------------------
+// Copy secrets.example.h to secrets.h and edit it. secrets.h is ignored by
+// Git, preventing Wi-Fi credentials from being published accidentally.
+#if __has_include("secrets.h")
+#include "secrets.h"
+#else
+inline constexpr char WIFI_SSID[] = "YOUR_WIFI_SSID";
+inline constexpr char WIFI_PASSWORD[] = "YOUR_WIFI_PASSWORD";
+inline constexpr char OSC_TARGET_HOST[] = "192.168.1.100";
+inline constexpr uint16_t OSC_TARGET_PORT = 9000;
+#endif
+
+// XIAO ESP32S3 pin names. The Arduino board definition maps these names to:
+// D0..D6 = GPIO1, GPIO2, GPIO3, GPIO4, GPIO5, GPIO6, GPIO43
+// D7..D9 = GPIO44, GPIO7, GPIO8
+inline constexpr uint8_t ROW_PINS[] = {D0, D1, D2, D3};
+inline constexpr uint8_t COL_PINS[] = {D4, D5, D6};
+inline constexpr uint8_t ENCODER_A_PIN = D7;
+inline constexpr uint8_t ENCODER_B_PIN = D8;
+inline constexpr uint8_t ENCODER_BUTTON_PIN = D9;
+
+inline constexpr uint8_t ROW_COUNT = 4;
+inline constexpr uint8_t COL_COUNT = 3;
+inline constexpr uint8_t KEY_COUNT = ROW_COUNT * COL_COUNT;
+
+inline constexpr uint32_t SERIAL_BAUD = 115200;
+inline constexpr uint32_t WIFI_RETRY_INTERVAL_MS = 5000;
+inline constexpr uint32_t MATRIX_SCAN_INTERVAL_US = 1000;
+inline constexpr uint32_t KEY_DEBOUNCE_MS = 20;
+inline constexpr uint32_t ENCODER_BUTTON_DEBOUNCE_MS = 20;
+
+// Most mechanical encoders generate four valid quadrature transitions per
+// detent. Change to 2 or 1 if one click needs multiple physical detents.
+inline constexpr int8_t ENCODER_TRANSITIONS_PER_DETENT = 4;
+
+// ChainOSC-compatible default encoder mapping:
+// absolute input 0..20, float output 0..1, wrapping at 20.
+inline constexpr int32_t ENCODER_ABSOLUTE_MIN = 0;
+inline constexpr int32_t ENCODER_ABSOLUTE_MAX = 20;
+inline constexpr char ENCODER_OSC_ADDRESS[] = "/avatar/parameters/Encoder";
+inline constexpr char ENCODER_BUTTON_OSC_ADDRESS[] =
+    "/avatar/parameters/EncoderClick";
