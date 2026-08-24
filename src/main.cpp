@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include <ArduinoOSCWiFi.h>
-#include <WiFi.h>
 
 #include "config.h"
 #include "app.h"
+#include "network_manager.h"
 
 namespace {
 
@@ -17,63 +17,19 @@ DebouncedInput keys[KEY_COUNT];
 DebouncedInput encoderButton;
 
 uint32_t lastMatrixScanUs = 0;
-uint32_t lastWifiAttemptMs = 0;
-
 uint8_t encoderPreviousState = 0;
 int8_t encoderTransitionAccumulator = 0;
 int32_t encoderAbsoluteValue = ENCODER_ABSOLUTE_MIN;
 
-bool wifiConfigured() {
-  return strcmp(WIFI_SSID, "YOUR_WIFI_SSID") != 0 && WIFI_SSID[0] != '\0';
-}
-
-void beginWifi() {
-  if (!wifiConfigured()) {
-    Serial.println("[WiFi] Edit include/config.h before uploading.");
-    return;
-  }
-
-  WiFi.mode(WIFI_STA);
-  WiFi.setAutoReconnect(true);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  lastWifiAttemptMs = millis();
-  Serial.printf("[WiFi] Connecting to %s\n", WIFI_SSID);
-}
-
-void maintainWifi() {
-  static wl_status_t previousStatus = WL_NO_SHIELD;
-  const wl_status_t status = WiFi.status();
-
-  if (status != previousStatus) {
-    if (status == WL_CONNECTED) {
-      Serial.printf("[WiFi] Connected, IP=%s, OSC target=%s:%u\n",
-                    WiFi.localIP().toString().c_str(), OSC_TARGET_HOST,
-                    OSC_TARGET_PORT);
-    } else {
-      Serial.printf("[WiFi] Status=%d\n", static_cast<int>(status));
-    }
-    previousStatus = status;
-  }
-
-  if (!wifiConfigured() || status == WL_CONNECTED) return;
-  const uint32_t now = millis();
-  if (now - lastWifiAttemptMs >= WIFI_RETRY_INTERVAL_MS) {
-    lastWifiAttemptMs = now;
-    Serial.println("[WiFi] Reconnecting...");
-    WiFi.disconnect();
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  }
-}
-
 void sendFloat(const char* address, float value) {
-  if (WiFi.status() != WL_CONNECTED) {
+  if (!networkIsConnected()) {
     Serial.printf("[OSC] skipped (WiFi disconnected): %s %.3f\n", address,
                   value);
     return;
   }
-  OscWiFi.send(OSC_TARGET_HOST, OSC_TARGET_PORT, address, value);
-  Serial.printf("[OSC] %s %.3f -> %s:%u\n", address, value, OSC_TARGET_HOST,
-                OSC_TARGET_PORT);
+  OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address, value);
+  Serial.printf("[OSC] %s %.3f -> %s:%u\n", address, value,
+                networkOscHost().c_str(), networkOscPort());
 }
 
 void sendKey(uint8_t keyIndex, bool pressed) {
@@ -195,13 +151,13 @@ void setupPins() {
 void appSetup() {
   Serial.begin(SERIAL_BAUD);
   delay(500);
-  Serial.println("\nChainOSCPad fixed-config hardware test");
+  Serial.printf("\n%s v%s\n", APP_NAME, APP_VERSION);
   setupPins();
-  beginWifi();
+  networkSetup();
 }
 
 void appLoop() {
-  maintainWifi();
+  networkLoop();
   scanMatrix();
   pollEncoder();
   delay(1);

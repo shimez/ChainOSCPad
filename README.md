@@ -1,8 +1,19 @@
-# ChainOSCPad 固定設定・動作確認版
+# ChainOSCPad
 
 XIAO ESP32S3、3列×4行キーマトリクス、ロータリーエンコーダーを使う
-ChainOSCPadの最初のハードウェア確認用ファームウェアです。設定用Web UIやNVS保存は、
-この版には含まれません。
+Wi-Fi OSCコントローラーです。
+
+## Version 0.2.0
+
+- 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
+- ブラウザーからWi-Fi認証情報とOSC送信先を設定
+- 設定をESP32-S3のNVSへ保存
+- `http://chainoscpad.local/`から設定画面へアクセス
+- 設定リセット
+- Arduino IDE／PlatformIO共通ソース
+
+変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
+実機確認項目は[TESTING.md](TESTING.md)にまとめています。
 
 ## 実装済み
 
@@ -14,6 +25,18 @@ ChainOSCPadの最初のハードウェア確認用ファームウェアです。
 - エンコーダープッシュのPress／Release送信
 - Wi-Fi切断時の再接続
 - USBシリアルへの入力・OSC送信ログ
+
+## 初回設定
+
+1. ファームウェアを書き込みます。
+2. PCまたはスマートフォンからWi-Fi AP`ChainOSCPad-Setup`へ接続します。
+3. パスワード`12345678`を入力します。
+4. 設定画面が自動表示されない場合は`http://192.168.4.1/`を開きます。
+5. 使用する2.4 GHz Wi-FiのSSID／パスワードとOSC送信先を保存します。
+6. 自動再起動後、同じLANから`http://chainoscpad.local/`を開けます。
+
+保存済みWi-Fiへ起動後15秒以内に接続できない場合も、設定APモードへ移行します。
+設定ページには認証機能がないため、信頼できるローカルネットワークで使用してください。
 
 ## 配線
 
@@ -56,31 +79,30 @@ ROWを順番にLOWへ駆動してCOLをプルアップ入力として読みま�
 `0～1`へマッピングし、20で0へ戻します。したがって整数ステップで実際に送信される値は
 `0.00, 0.05, ... 0.95`です。
 
-## 設定ファイル
+## 旧固定設定ファイル
 
-`include/secrets.example.h`を同じフォルダーの`secrets.h`へコピーし、次の値を
-書き換えます。
+Version 0.2.0ではWi-FiとOSC送信先をブラウザーから設定するため、通常は
+`include/secrets.h`を作成する必要はありません。旧Version 0.1.0用の設定例は、
+参照用として残しています。
 
    - `WIFI_SSID`
    - `WIFI_PASSWORD`
    - `OSC_TARGET_HOST`
    - 必要なら`OSC_TARGET_PORT`
 
-`secrets.h`は`.gitignore`の対象です。Wi-FiパスワードをGitHubへpushしないでください。
-ファイルを作成しなくてもプレースホルダー設定でコンパイルできますが、Wi-Fi接続は
-開始されません。
+`secrets.h`は引き続き`.gitignore`の対象です。Wi-FiパスワードをGitHubへpushしないで
+ください。
 
 ## Arduino IDE
 
 1. Arduino IDEのBoards ManagerでEspressif Systemsの`esp32`ボードパッケージを
    インストールします。
 2. Library Managerで`ArduinoOSC`をインストールします。
-3. 上記の手順で`include/secrets.h`を作成します。
-4. ルートの`ChainOSCPad.ino`をArduino IDEで開きます。
-5. ボードを`XIAO_ESP32S3`または`Seeed XIAO ESP32S3`に設定します。
-6. `USB CDC On Boot`を`Enabled`にします。
-7. XIAOのポートを選び、検証／書き込みを実行します。
-8. シリアルモニターを115200 bpsで開きます。
+3. ルートの`ChainOSCPad.ino`をArduino IDEで開きます。
+4. ボードを`XIAO_ESP32S3`または`Seeed XIAO ESP32S3`に設定します。
+5. `USB CDC On Boot`を`Enabled`にします。
+6. XIAOのポートを選び、検証／書き込みを実行します。
+7. シリアルモニターを115200 bpsで開きます。
 
 ボード名が一覧にない場合は、Seeed Studio WikiのXIAO ESP32S3 Arduino IDE導入手順に
 従ってボードパッケージを更新してください。
@@ -88,9 +110,8 @@ ROWを順番にLOWへ駆動してCOLをプルアップ入力として読みま�
 ## PlatformIO
 
 1. VS CodeとPlatformIOでこのフォルダーを開きます。
-2. 上記の手順で`include/secrets.h`を作成します。
-3. XIAO ESP32S3をUSB接続します。
-4. ビルドして書き込みます。
+2. XIAO ESP32S3をUSB接続します。
+3. ビルドして書き込みます。
 
 ```powershell
 pio run

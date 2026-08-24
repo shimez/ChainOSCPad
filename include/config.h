@@ -16,6 +16,15 @@ inline constexpr char OSC_TARGET_HOST[] = "192.168.1.100";
 inline constexpr uint16_t OSC_TARGET_PORT = 9000;
 #endif
 
+inline constexpr char APP_NAME[] = "ChainOSCPad";
+inline constexpr char APP_VERSION[] = "0.2.0";
+inline constexpr char WIFI_AP_SSID[] = "ChainOSCPad-Setup";
+inline constexpr char WIFI_AP_PASSWORD[] = "12345678";
+inline constexpr char WIFI_MDNS_HOST[] = "chainoscpad";
+inline constexpr char PREFS_NAMESPACE[] = "chainoscpad";
+inline constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 15000;
+inline constexpr uint32_t NETWORK_RESTART_DELAY_MS = 1200;
+
 // XIAO ESP32S3 pin names. The Arduino board definition maps these names to:
 // D0..D6 = GPIO1, GPIO2, GPIO3, GPIO4, GPIO5, GPIO6, GPIO43
 // D7..D9 = GPIO44, GPIO7, GPIO8
@@ -30,7 +39,6 @@ inline constexpr uint8_t COL_COUNT = 3;
 inline constexpr uint8_t KEY_COUNT = ROW_COUNT * COL_COUNT;
 
 inline constexpr uint32_t SERIAL_BAUD = 115200;
-inline constexpr uint32_t WIFI_RETRY_INTERVAL_MS = 5000;
 inline constexpr uint32_t MATRIX_SCAN_INTERVAL_US = 1000;
 inline constexpr uint32_t KEY_DEBOUNCE_MS = 20;
 inline constexpr uint32_t ENCODER_BUTTON_DEBOUNCE_MS = 20;
