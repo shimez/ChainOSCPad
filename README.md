@@ -3,7 +3,7 @@
 XIAO ESP32S3、3列×4行キーマトリクス、ロータリーエンコーダーを使う
 Wi-Fi OSCコントローラーです。
 
-## Version 0.4.0
+## Version 0.4.1
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
@@ -63,6 +63,7 @@ Wi-Fi接続後に`http://chainoscpad.local/`を開きます。Wi-Fi／OSC送信�
 各デバイスカードの`…`メニューからプリセットをJSONで入出力できます。ネットワーク
 画面の「設定のバックアップと復元」では、OSC送信先、UI言語、12 Key、Encoderを
 まとめて入出力します。全体設定JSONにWi-FiのSSIDとパスワードは含まれません。
+同じ`…`メニューから、選択したKeyまたはEncoderだけを初期設定へ戻せます。
 
 ## 配線
 

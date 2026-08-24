@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1
+
+- Unify whole-settings JSON import limits at 64 KiB in the Web UI and firmware
+- Remove the legacy split Network / Inputs Web UI implementation
+- Keep non-AJAX save and reset responses on the unified settings page
+- Update the hardware test checklist for the unified root URL
+- Complete the version 0.4.1 hardware test checklist
+
 ## 0.4.0
 
 - Add versioned whole-settings JSON export and import without Wi-Fi credentials
@@ -12,6 +20,7 @@
 - Select the browser language on the first Web UI visit
 - Add localized import progress, confirmation, validation, and storage messages
 - Combine network, JSON backup, Key, and Encoder settings into one Web UI page
+- Add per-Key and Encoder default-reset actions to each device menu
 - Update the firmware version to 0.4.0 and add ArduinoJson to both build workflows
 
 ## 0.3.0
