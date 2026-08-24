@@ -17,7 +17,7 @@ inline constexpr uint16_t OSC_TARGET_PORT = 9000;
 #endif
 
 inline constexpr char APP_NAME[] = "ChainOSCPad";
-inline constexpr char APP_VERSION[] = "0.2.0";
+inline constexpr char APP_VERSION[] = "0.3.0";
 inline constexpr char WIFI_AP_SSID[] = "ChainOSCPad-Setup";
 inline constexpr char WIFI_AP_PASSWORD[] = "12345678";
 inline constexpr char WIFI_MDNS_HOST[] = "chainoscpad";
@@ -46,11 +46,3 @@ inline constexpr uint32_t ENCODER_BUTTON_DEBOUNCE_MS = 20;
 // Most mechanical encoders generate four valid quadrature transitions per
 // detent. Change to 2 or 1 if one click needs multiple physical detents.
 inline constexpr int8_t ENCODER_TRANSITIONS_PER_DETENT = 4;
-
-// ChainOSC-compatible default encoder mapping:
-// absolute input 0..20, float output 0..1, wrapping at 20.
-inline constexpr int32_t ENCODER_ABSOLUTE_MIN = 0;
-inline constexpr int32_t ENCODER_ABSOLUTE_MAX = 20;
-inline constexpr char ENCODER_OSC_ADDRESS[] = "/avatar/parameters/Encoder";
-inline constexpr char ENCODER_BUTTON_OSC_ADDRESS[] =
-    "/avatar/parameters/EncoderClick";

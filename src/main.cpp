@@ -1,8 +1,10 @@
 #include <Arduino.h>
 #include <ArduinoOSCWiFi.h>
+#include <math.h>
 
 #include "config.h"
 #include "app.h"
+#include "input_settings.h"
 #include "network_manager.h"
 
 namespace {
@@ -19,23 +21,84 @@ DebouncedInput encoderButton;
 uint32_t lastMatrixScanUs = 0;
 uint8_t encoderPreviousState = 0;
 int8_t encoderTransitionAccumulator = 0;
-int32_t encoderAbsoluteValue = ENCODER_ABSOLUTE_MIN;
+float encoderAbsoluteValue = 0.0f;
 
-void sendFloat(const char* address, float value) {
+bool oscReady(const String& address, const String& value) {
   if (!networkIsConnected()) {
-    Serial.printf("[OSC] skipped (WiFi disconnected): %s %.3f\n", address,
-                  value);
-    return;
+    Serial.printf("[OSC] skipped (WiFi disconnected): %s %s\n",
+                  address.c_str(), value.c_str());
+    return false;
   }
-  OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address, value);
-  Serial.printf("[OSC] %s %.3f -> %s:%u\n", address, value,
+  return true;
+}
+
+void logSent(const String& address, const String& value,
+             OscValueType type) {
+  Serial.printf("[OSC] %s %s type=%u -> %s:%u\n", address.c_str(),
+                value.c_str(), static_cast<unsigned>(type),
                 networkOscHost().c_str(), networkOscPort());
 }
 
-void sendKey(uint8_t keyIndex, bool pressed) {
-  char address[32];
-  snprintf(address, sizeof(address), "/chainoscpad/key/%u", keyIndex + 1);
-  sendFloat(address, pressed ? 1.0f : 0.0f);
+void sendConfiguredMessage(const OscMessageSetting& message) {
+  if (!oscReady(message.address, message.value)) return;
+  if (message.type == OSC_TYPE_FLOAT) {
+    float value = 0;
+    if (!inputParseFloat(message.value, value)) return;
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(),
+                 message.address.c_str(), value);
+  } else if (message.type == OSC_TYPE_INT) {
+    int32_t value = 0;
+    if (!inputParseInt(message.value, value)) return;
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(),
+                 message.address.c_str(), static_cast<int>(value));
+  } else {
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(),
+                 message.address.c_str(), message.value.c_str());
+  }
+  logSent(message.address, message.value, message.type);
+}
+
+void sendMappedValue(const String& address, float mapped,
+                     OscValueType type) {
+  String text;
+  if (type == OSC_TYPE_INT) {
+    const int value = static_cast<int>(lroundf(mapped));
+    text = String(value);
+    if (!oscReady(address, text)) return;
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
+                 value);
+  } else if (type == OSC_TYPE_STRING) {
+    text = String(mapped, 3);
+    if (!oscReady(address, text)) return;
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
+                 text.c_str());
+  } else {
+    text = String(mapped, 3);
+    if (!oscReady(address, text)) return;
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
+                 mapped);
+  }
+  logSent(address, text, type);
+}
+
+void sendButton(ButtonInputSetting& setting, bool pressed) {
+  if (setting.mode == INPUT_MODE_SEQUENCE) {
+    if (!pressed) return;
+    SequenceSetting& sequence = setting.sequence;
+    sendMappedValue(sequence.address, sequence.current, sequence.type);
+    float next = sequence.current + sequence.step;
+    if ((sequence.step >= 0 && next > sequence.end + 1e-6f) ||
+        (sequence.step < 0 && next < sequence.end - 1e-6f)) {
+      next = sequence.start;
+    }
+    sequence.current = next;
+    return;
+  }
+  OscMessageSetting* messages = pressed ? setting.pressMessages
+                                        : setting.releaseMessages;
+  const uint8_t count = pressed ? setting.pressMessageCount
+                                : setting.releaseMessageCount;
+  for (uint8_t i = 0; i < count; ++i) sendConfiguredMessage(messages[i]);
 }
 
 bool updateDebounce(DebouncedInput& input, bool sample, uint32_t debounceMs,
@@ -78,29 +141,33 @@ void scanMatrix() {
     if (updateDebounce(keys[key], samples[key], KEY_DEBOUNCE_MS, nowMs)) {
       Serial.printf("[Key] %u %s\n", key + 1,
                     keys[key].stable ? "pressed" : "released");
-      sendKey(key, keys[key].stable);
+      KeyInputSetting& setting = inputKeySetting(key);
+      sendButton(setting.button, keys[key].stable);
     }
   }
 }
 
-void sendEncoderAbsolute() {
-  const int32_t span = ENCODER_ABSOLUTE_MAX - ENCODER_ABSOLUTE_MIN;
-  const float mapped = static_cast<float>(encoderAbsoluteValue -
-                                          ENCODER_ABSOLUTE_MIN) /
-                       static_cast<float>(span);
-  sendFloat(ENCODER_OSC_ADDRESS, mapped);
-  Serial.printf("[Encoder] absolute=%ld mapped=%.3f\n",
-                static_cast<long>(encoderAbsoluteValue), mapped);
-}
-
 void applyEncoderDetent(int8_t direction) {
-  const int32_t span = ENCODER_ABSOLUTE_MAX - ENCODER_ABSOLUTE_MIN;
-  encoderAbsoluteValue += direction;
-  while (encoderAbsoluteValue >= ENCODER_ABSOLUTE_MAX)
-    encoderAbsoluteValue -= span;
-  while (encoderAbsoluteValue < ENCODER_ABSOLUTE_MIN)
-    encoderAbsoluteValue += span;
-  sendEncoderAbsolute();
+  const EncoderInputSetting& setting = inputEncoderSetting();
+  float mapped = 0.0f;
+  if (setting.sendIncrement) {
+    mapped = static_cast<float>(direction) * setting.incrementScale;
+    mapped = constrain(mapped, min(setting.outputMin, setting.outputMax),
+                       max(setting.outputMin, setting.outputMax));
+  } else {
+    const float span = setting.absoluteInputMax - setting.absoluteInputMin;
+    encoderAbsoluteValue += direction;
+    while (encoderAbsoluteValue >= setting.absoluteInputMax)
+      encoderAbsoluteValue -= span;
+    while (encoderAbsoluteValue < setting.absoluteInputMin)
+      encoderAbsoluteValue += span;
+    const float ratio = (encoderAbsoluteValue - setting.absoluteInputMin) / span;
+    mapped = setting.outputMin + ratio * (setting.outputMax - setting.outputMin);
+  }
+  sendMappedValue(setting.rotationAddress, mapped, setting.outputType);
+  Serial.printf("[Encoder] position=%.3f mapped=%.3f mode=%s\n",
+                encoderAbsoluteValue, mapped,
+                setting.sendIncrement ? "increment" : "absolute");
 }
 
 void pollEncoder() {
@@ -126,8 +193,8 @@ void pollEncoder() {
   const bool pressed = digitalRead(ENCODER_BUTTON_PIN) == LOW;
   if (updateDebounce(encoderButton, pressed, ENCODER_BUTTON_DEBOUNCE_MS,
                      millis())) {
-    sendFloat(ENCODER_BUTTON_OSC_ADDRESS,
-              encoderButton.stable ? 1.0f : 0.0f);
+    EncoderInputSetting& setting = inputEncoderSetting();
+    sendButton(setting.click, encoderButton.stable);
     Serial.printf("[Encoder button] %s\n",
                   encoderButton.stable ? "pressed" : "released");
   }
@@ -153,6 +220,8 @@ void appSetup() {
   delay(500);
   Serial.printf("\n%s v%s\n", APP_NAME, APP_VERSION);
   setupPins();
+  inputSettingsSetup();
+  encoderAbsoluteValue = inputEncoderSetting().absoluteInputMin;
   networkSetup();
 }
 

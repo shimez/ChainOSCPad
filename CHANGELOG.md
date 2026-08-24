@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.3.0
+
+- Add per-key OSC Address, Press value, Release value, and value type settings
+- Add Float, Int, and String OSC output types
+- Add Encoder Absolute and Increment modes
+- Add configurable Encoder input range, scale, output range, and output type
+- Add configurable Encoder Push messages
+- Match ChainOSCmini Key and Encoder Click UI: Press / Release up to eight
+  messages, ordering, deletion, and Sequence mode
+- Match ChainOSCmini Encoder Rotation field names, ordering, and conditional
+  Absolute fields
+- Match ChainOSCmini Key and Encoder card styling, identity rows,
+  tabs, message counters, byte counters, and responsive layout
+- Add a sticky whole-settings save bar and remove per-device save buttons
+- Show an unsaved-changes indicator beside the whole-settings save button
+- Save all input settings with fetch without changing the current URL
+- Use a pointer cursor for interactive Web UI controls
+- Disable message-add buttons when Press / Release reaches eight messages
+- Align OSC message type fields with the Address and Value fields
+- Load input-page CSS and JavaScript before device cards so large settings do not disable UI controls
+- Stream the input page in common, per-card, Encoder, and footer chunks instead of building one page-sized String
+- Add String as a Sequence output type, matching ChainOSCmini
+- Add editable Key and Encoder device names saved to LittleFS
+- Validate and save all input settings as compact LittleFS blobs
+- Use atomic temporary-file replacement and verify saved input settings
+- Clear network and input settings together from the reset action
+
 ## 0.2.0
 
 - Add captive setup AP (`ChainOSCPad-Setup`)
@@ -16,4 +43,3 @@
 - Add 3x4 key matrix scanning and per-key debounce
 - Add rotary encoder absolute output and encoder push input
 - Add Arduino IDE and PlatformIO project entry points
-

@@ -3,14 +3,18 @@
 XIAO ESP32S3、3列×4行キーマトリクス、ロータリーエンコーダーを使う
 Wi-Fi OSCコントローラーです。
 
-## Version 0.2.0
+## Version 0.3.0
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
-- 設定をESP32-S3のNVSへ保存
+- Wi-Fi／OSC送信先をESP32-S3のNVSへ保存
 - `http://chainoscpad.local/`から設定画面へアクセス
 - 設定リセット
 - Arduino IDE／PlatformIO共通ソース
+- Key 1～12のOSC Address、Press／Release値、Float／Int／String型を設定
+- Encoder回転のAbsolute／Increment、入出力範囲、出力型を設定
+- Encoder ClickのPress／Release複数メッセージとSequenceを設定
+- 入力設定をLittleFSへ保存
 
 変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
 実機確認項目は[TESTING.md](TESTING.md)にまとめています。
@@ -37,6 +41,21 @@ Wi-Fi OSCコントローラーです。
 
 保存済みWi-Fiへ起動後15秒以内に接続できない場合も、設定APモードへ移行します。
 設定ページには認証機能がないため、信頼できるローカルネットワークで使用してください。
+
+## 入力設定
+
+Wi-Fi接続後に`http://chainoscpad.local/inputs`を開くか、設定画面上部の`Inputs`を
+選択します。
+
+- Key 1～12：`Press / Release`または`Sequence`を選択
+- Press／Release：合計最大8メッセージ、0件可。OSC Address、型、値、送信順を設定
+- Sequence：OSC Address、Start、End、Step、Float／Int／String型を設定
+- Encoder Rotation：OSC Address、Absolute／Increment、入力範囲、増分倍率、
+  出力範囲、Float／Int／String型
+- Encoder Click：Keyと同じPress／Release最大8メッセージとSequence
+
+全項目を検証してからLittleFSへ保存し、その場で動作へ反映します。Float／Intで
+数値として解釈できない値や、`/`で始まらないOSC Addressは拒否されます。
 
 ## 配線
 
@@ -67,7 +86,7 @@ ROWを順番にLOWへ駆動してCOLをプルアップ入力として読みま�
 ブレッドボード版をダイオードなしで試すことはできますが、特定の3キー以上を同時に
 押すと、押していないキーも押されたように見えるゴーストが発生し得ます。
 
-## 固定OSC設定
+## OSC初期設定
 
 | 入力 | OSC Address | 型・値 |
 |---|---|---|

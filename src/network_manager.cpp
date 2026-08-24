@@ -1,250 +1,76 @@
 #include "network_manager.h"
-
 #include <DNSServer.h>
 #include <ESPmDNS.h>
 #include <Preferences.h>
 #include <WebServer.h>
 #include <WiFi.h>
-
 #include "config.h"
+#include "input_settings.h"
 
 namespace {
+DNSServer dns; WebServer server(80);
+String ssid,password,oscHost=OSC_TARGET_HOST; uint16_t oscPort=OSC_TARGET_PORT;
+bool apMode=false,restartPending=false; uint32_t restartAt=0;
 
-DNSServer dnsServer;
-WebServer webServer(80);
+String esc(const String& s){String o;for(size_t i=0;i<s.length();++i){char c=s[i];if(c=='&')o+="&amp;";else if(c=='<')o+="&lt;";else if(c=='>')o+="&gt;";else if(c=='\"')o+="&quot;";else if(c=='\'')o+="&#39;";else o+=c;}return o;}
+bool hostValid(const String& h){if(h.isEmpty()||h.length()>253)return false;for(size_t i=0;i<h.length();++i){char c=h[i];if(isWhitespace(c)||c=='/'||c==':')return false;}return true;}
+String types(const String& name,OscValueType selected,bool strings=true){String h="<select name='"+name+"'>";const char* l[]={"Float","Int","String"};for(uint8_t i=0;i<(strings?3:2);++i)h+="<option value='"+String(i)+"'"+(selected==i?" selected":"")+">"+l[i]+"</option>";return h+"</select>";}
+String row(const String& prefix,const char* event,uint8_t i,const OscMessageSetting& m){String p=prefix+(String(event)=="press"?"p":"r");String h="<div class='osc-row' data-event='"+String(event)+"'><div class='order'><button type='button' onclick='moveMsg(this,-1)'>&uarr;</button><button type='button' onclick='moveMsg(this,1)'>&darr;</button></div><label>OSCアドレス<input class='addr counted' maxlength='192' required name='"+p+"_address_"+i+"' value='"+esc(m.address)+"' oninput='countBytes(this,192)'><small>"+String(m.address.length())+" / 192 bytes</small></label><label>型"+types(p+"_type_"+i,m.type)+"</label><label>値<input class='counted' maxlength='128' name='"+p+"_value_"+i+"' value='"+esc(m.value)+"' oninput='countBytes(this,128)'><small>"+String(m.value.length())+" / 128 bytes</small></label><button type='button' class='del' onclick='removeMsg(this)'>削除</button></div>";return h;}
+String buttonEditor(const String& g,const String& prefix,const ButtonInputSetting& b,const char* modeLabel,const char* seqTitle){const bool full=b.pressMessageCount+b.releaseMessageCount>=8;String h="<div class='mode'><label>"+String(modeLabel)+"<select name='"+prefix+"mode' onchange=\"toggleMode(this,'"+g+"')\"><option value='0'"+(b.mode==INPUT_MODE_PRESS_RELEASE?" selected":"")+">押した時／離した時</option><option value='1'"+(b.mode==INPUT_MODE_SEQUENCE?" selected":"")+">シーケンス</option></select></label></div>";h+="<div id='pr-"+g+"' class='pr' data-prefix='"+prefix+"' style='display:"+String(b.mode==INPUT_MODE_SEQUENCE?"none":"block")+"'><div class='usage'><b>メッセージ <span class='total'>"+String(b.pressMessageCount+b.releaseMessageCount)+"</span> / 8</b><span>押した時＋離した時</span></div><input class='pc' type='hidden' name='"+prefix+"p_count' value='"+String(b.pressMessageCount)+"'><input class='rc' type='hidden' name='"+prefix+"r_count' value='"+String(b.releaseMessageCount)+"'><div class='tabs'><button type='button' class='active' onclick=\"showEvent(this,'press')\">押した時</button><button type='button' onclick=\"showEvent(this,'release')\">離した時</button></div><div class='panel press'><div class='list'>";for(uint8_t i=0;i<b.pressMessageCount;++i)h+=row(prefix,"press",i,b.pressMessages[i]);h+="</div><button type='button' class='add' onclick=\"addMsg(this,'press')\""+String(full?" disabled":"")+">+ OSCメッセージを追加</button></div><div class='panel release' style='display:none'><div class='list'>";for(uint8_t i=0;i<b.releaseMessageCount;++i)h+=row(prefix,"release",i,b.releaseMessages[i]);h+="</div><button type='button' class='add' onclick=\"addMsg(this,'release')\""+String(full?" disabled":"")+">+ OSCメッセージを追加</button></div></div>";h+="<div id='seq-"+g+"' class='sequence' style='display:"+String(b.mode==INPUT_MODE_SEQUENCE?"block":"none")+"'><h3>"+seqTitle+"</h3><p>開始値から増減量ずつ進み、終了値を超えると開始値へ戻ります。</p><div class='seqgrid'><label>OSCアドレス<input maxlength='192' required name='"+prefix+"seq_address' value='"+esc(b.sequence.address)+"'></label><label>開始値<input type='number' step='any' required name='"+prefix+"seq_start' value='"+String(b.sequence.start,7)+"'></label><label>終了値<input type='number' step='any' required name='"+prefix+"seq_end' value='"+String(b.sequence.end,7)+"'></label><label>増減量<input type='number' step='any' required name='"+prefix+"seq_step' value='"+String(b.sequence.step,7)+"'></label><label>型"+types(prefix+"seq_type",b.sequence.type)+"</label></div></div>";return h;}
 
-String configuredSsid;
-String configuredPassword;
-String oscHost = OSC_TARGET_HOST;
-uint16_t oscPort = OSC_TARGET_PORT;
-bool accessPointMode = false;
-bool mdnsStarted = false;
-bool restartPending = false;
-uint32_t restartAtMs = 0;
+String head(const char* title){return String("<!doctype html><html lang='ja'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>")+title+"</title><style>*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;background:#f3f4f6;color:#10213b;margin:0;padding:12px}main{max-width:1380px;margin:auto}header{background:#fff;border-radius:13px;padding:18px 24px;margin-bottom:16px;box-shadow:0 3px 16px #0001}.card{background:#fff;border-radius:13px;border-left:6px solid #6d36d7;padding:18px 20px;margin-bottom:18px;box-shadow:0 4px 18px #0002}.device-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.device-title{display:flex;align-items:center;gap:8px;font-size:21px;font-weight:700}.collapse,.menu{width:38px;height:38px;border:1px solid #d9dee7;border-radius:8px;background:#f7f8fa;color:#38516d;font-size:19px}.badge{display:inline-block;border-radius:8px;padding:2px 8px;font-size:16px}.badge-type{background:#eef2ff;color:#203d77}.uid{background:#eee;border-radius:5px;padding:6px 12px;font-family:monospace;margin-bottom:25px}.device-body.collapsed{display:none}nav{display:flex;gap:14px}a{color:#2563eb}.key-grid,.encgrid,.seqgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.key-grid>.pr,.key-grid>.sequence{grid-column:1/-1}label{display:block;font-weight:700;margin-top:10px}input,select{width:100%;padding:10px 12px;margin-top:5px;border:1px solid #aeb9c8;border-radius:3px;background:#fff;font-size:16px}.usage{display:flex;justify-content:space-between;align-items:center;margin:18px 0;background:#eef4ff;border:1px solid #c8d9ff;border-radius:11px;padding:14px 18px;color:#16459a}.tabs{display:flex;background:#edf0f4;border-radius:11px;padding:4px;margin-bottom:15px}.tabs button{flex:1;border:0;background:transparent;padding:15px;font-size:16px;color:#60708a}.tabs .active{background:#fff;color:#10213b;border-radius:8px;box-shadow:0 1px 5px #0003}.osc-row{display:grid;grid-template-columns:72px minmax(280px,2fr) 145px minmax(180px,1fr) 86px;gap:12px;align-items:center;background:#f8fafc;border:1px solid #d9e0e9;border-radius:11px;padding:15px;margin-bottom:14px}.order{display:flex;gap:5px}.order button{width:30px;height:42px;border:1px solid #d4dce7;background:#fff;border-radius:7px}.osc-row small{display:block;text-align:right;color:#68758a;font-weight:400}.del{background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;border-radius:7px;padding:12px}.add{width:100%;border:1px dashed #7fa8ff;background:#f8fbff;color:#1d5eea;border-radius:7px;padding:14px;font-size:16px}.sequence{background:#f0fdf4;border-left:5px solid #22c55e;padding:15px;margin-top:14px}.rotation{border-left:5px solid #3b82f6;padding:14px 18px;background:#f8fbff;border-radius:8px}.click{border-left:5px solid #22c55e;padding:14px 18px;background:#f7fff9;border-radius:8px;margin-top:20px}.save{background:#2563eb;color:white;border:0;border-radius:7px;padding:12px 20px;margin-top:16px}.save-bar{position:sticky;z-index:15;bottom:8px;display:flex;align-items:center;gap:12px;padding:10px 12px;margin:16px 0 28px;background:rgba(255,255,255,.96);border:1px solid #dce2ea;border-radius:10px;box-shadow:0 5px 18px rgba(0,0,0,.14)}.save-bar .save{flex:1;margin:0;background:#28a745;font-size:16px}.ok{color:#166534}.err{color:#b91c1c}@media(max-width:800px){.key-grid,.encgrid,.seqgrid{grid-template-columns:1fr}.osc-row{grid-template-columns:1fr}.order{display:flex}}</style></head><body><main>";}
+String js(){return F(R"WEB(
+<style>
+.osc-row{align-items:start}.osc-row label{margin-top:0}.order{align-self:center}.osc-row>.del{margin-top:22px}
+.add:disabled{background:#eee;color:#888;border-color:#ccc;cursor:not-allowed}
+.dirty-status{color:#b45f06;font-weight:bold;white-space:nowrap}
+button:not(:disabled),a,select{cursor:pointer}button:disabled{cursor:not-allowed}
+.toast{position:fixed;z-index:30;left:50%;bottom:78px;transform:translateX(-50%);padding:11px 18px;border-radius:8px;background:#17324d;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+</style><script>
+function toggleCard(b,id){let x=document.getElementById(id),c=x.classList.toggle('collapsed');b.textContent=c?'▶':'▼'}
+function countBytes(i,n){i.nextElementSibling.textContent=new TextEncoder().encode(i.value).length+' / '+n+' bytes'}
+function toggleMode(s,g){document.getElementById('pr-'+g).style.display=s.value==='0'?'block':'none';document.getElementById('seq-'+g).style.display=s.value==='1'?'block':'none'}
+function showEvent(b,e){let pr=b.closest('.pr');pr.querySelectorAll('.panel').forEach(x=>x.style.display=x.classList.contains(e)?'block':'none');pr.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+function markDirty(){let status=document.getElementById('dirty-status');if(status)status.hidden=false}
+function showToast(message){let toast=document.getElementById('save-toast');if(!toast){toast=document.createElement('div');toast.id='save-toast';toast.className='toast';document.body.appendChild(toast)}toast.textContent=message;toast.hidden=false;clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>toast.hidden=true,3000)}
+async function saveInputSettings(event){event.preventDefault();const form=event.currentTarget,button=form.querySelector('.save-bar .save'),body=new URLSearchParams(new FormData(form));body.set('ajax','1');button.disabled=true;try{const response=await fetch(form.action,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});const message=await response.text();if(!response.ok)throw new Error(message);document.getElementById('dirty-status').hidden=true;showToast(message)}catch(error){alert(error.message||'設定を保存できませんでした。')}finally{button.disabled=false}}
+function renumber(pr){let x=pr.dataset.prefix,total=0;['press','release'].forEach(e=>{let p=e==='press'?'p':'r',rows=pr.querySelectorAll('.panel.'+e+' .osc-row');rows.forEach((r,i)=>{r.querySelector('.addr').name=x+p+'_address_'+i;r.querySelector('select').name=x+p+'_type_'+i;r.querySelectorAll('input')[1].name=x+p+'_value_'+i});pr.querySelector('.'+p+'c').value=rows.length;total+=rows.length});pr.querySelector('.total').textContent=total;pr.querySelectorAll('.add').forEach(button=>button.disabled=total>=8)}
+function addMsg(b,e){let pr=b.closest('.pr');if(pr.querySelectorAll('.osc-row').length>=8)return;let d=document.createElement('div');d.className='osc-row';d.innerHTML=`<div class=order><button type=button onclick="moveMsg(this,-1)">&uarr;</button><button type=button onclick="moveMsg(this,1)">&darr;</button></div><label>OSCアドレス<input class=addr maxlength=192 required value=/ oninput="countBytes(this,192)"><small>1 / 192 bytes</small></label><label>型<select><option value=0>Float</option><option value=1>Int</option><option value=2>String</option></select></label><label>値<input maxlength=128 value=1.0 oninput="countBytes(this,128)"><small>3 / 128 bytes</small></label><button type=button class=del onclick=removeMsg(this)>削除</button>`;b.previousElementSibling.appendChild(d);renumber(pr);markDirty()}
+function removeMsg(b){let pr=b.closest('.pr');b.closest('.osc-row').remove();renumber(pr);markDirty()}
+function moveMsg(b,d){let r=b.closest('.osc-row'),l=r.parentElement,moved=false;if(d<0&&r.previousElementSibling){l.insertBefore(r,r.previousElementSibling);moved=true}if(d>0&&r.nextElementSibling){l.insertBefore(r.nextElementSibling,r);moved=true}renumber(b.closest('.pr'));if(moved)markDirty()}
+function encMode(s){s.closest('.rotation').querySelectorAll('.abs').forEach(x=>x.style.display=s.value==='0'?'block':'none')}
+document.addEventListener('DOMContentLoaded',()=>{const form=document.getElementById('input-form'),bar=form&&form.querySelector('.save-bar');if(!form||!bar)return;const status=document.createElement('span');status.id='dirty-status';status.className='dirty-status';status.hidden=true;status.textContent='未保存の変更があります';bar.insertBefore(status,bar.firstChild);form.addEventListener('input',markDirty);form.addEventListener('change',markDirty);form.addEventListener('submit',saveInputSettings);form.querySelectorAll('.pr').forEach(renumber)});
+</script>)WEB");}
 
-String htmlEscape(const String& value) {
-  String escaped;
-  escaped.reserve(value.length() + 16);
-  for (size_t i = 0; i < value.length(); ++i) {
-    switch (value[i]) {
-      case '&': escaped += F("&amp;"); break;
-      case '<': escaped += F("&lt;"); break;
-      case '>': escaped += F("&gt;"); break;
-      case '"': escaped += F("&quot;"); break;
-      case '\'': escaped += F("&#39;"); break;
-      default: escaped += value[i]; break;
-    }
-  }
-  return escaped;
+bool parseType(const String& s,OscValueType& t,bool strings=true){if(s.length()!=1||s[0]<'0'||s[0]>(strings?'2':'1'))return false;t=(OscValueType)(s[0]-'0');return true;}
+bool parseMessage(const String& prefix,const char* event,uint8_t i,OscMessageSetting& m){String p=prefix+event;m.address=server.arg(p+"_address_"+i);m.address.trim();m.value=server.arg(p+"_value_"+i);return parseType(server.arg(p+"_type_"+i),m.type)&&inputOscMessageValid(m);}
+bool parseButton(const String& prefix,ButtonInputSetting& b){b.mode=server.arg(prefix+"mode")=="1"?INPUT_MODE_SEQUENCE:INPUT_MODE_PRESS_RELEASE;int pc=server.arg(prefix+"p_count").toInt(),rc=server.arg(prefix+"r_count").toInt();if(pc<0||rc<0||pc+rc>8)return false;b.pressMessageCount=pc;b.releaseMessageCount=rc;bool ok=true;for(uint8_t i=0;i<b.pressMessageCount;++i)ok=parseMessage(prefix,"p",i,b.pressMessages[i])&&ok;for(uint8_t i=0;i<b.releaseMessageCount;++i)ok=parseMessage(prefix,"r",i,b.releaseMessages[i])&&ok;b.sequence.address=server.arg(prefix+"seq_address");b.sequence.address.trim();ok=parseType(server.arg(prefix+"seq_type"),b.sequence.type)&&ok;ok=inputParseFloat(server.arg(prefix+"seq_start"),b.sequence.start)&&ok;ok=inputParseFloat(server.arg(prefix+"seq_end"),b.sequence.end)&&ok;ok=inputParseFloat(server.arg(prefix+"seq_step"),b.sequence.step)&&ok;inputNormalizeSequence(b.sequence);return ok&&inputButtonSettingValid(b);}
+bool parseKey(uint8_t index,KeyInputSetting& s){String prefix="k"+String(index)+"_";s=inputKeySetting(index);s.displayName=server.arg(prefix+"display_name");s.displayName.trim();return !s.displayName.isEmpty()&&s.displayName.length()<=64&&parseButton(prefix,s.button);}
+bool parseEncoder(EncoderInputSetting& e){const String prefix="enc_";e=inputEncoderSetting();e.displayName=server.arg(prefix+"display_name");e.displayName.trim();e.rotationAddress=server.arg(prefix+"erot");e.rotationAddress.trim();e.sendIncrement=server.arg(prefix+"emode")=="1";return !e.displayName.isEmpty()&&e.displayName.length()<=64&&parseType(server.arg(prefix+"eotype"),e.outputType)&&inputParseFloat(server.arg(prefix+"eamin"),e.absoluteInputMin)&&inputParseFloat(server.arg(prefix+"eamax"),e.absoluteInputMax)&&inputParseFloat(server.arg(prefix+"escale"),e.incrementScale)&&inputParseFloat(server.arg(prefix+"eomin"),e.outputMin)&&inputParseFloat(server.arg(prefix+"eomax"),e.outputMax)&&parseButton(prefix,e.click)&&inputEncoderSettingValid(e);}
+void scheduleRestart(){restartPending=true;restartAt=millis()+NETWORK_RESTART_DELAY_MS;}
+
+String networkPage(const String& msg="",bool err=false){String h=head("ChainOSCPad Settings");h+="<style>button:not(:disabled),a,select{cursor:pointer}button:disabled{cursor:not-allowed}.toast{position:fixed;z-index:30;left:50%;bottom:30px;transform:translateX(-50%);padding:11px 18px;border-radius:8px;background:#17324d;color:#fff;box-shadow:0 4px 16px #0004}</style><header><h1>ChainOSCPad</h1><nav><a href='/'>Network</a><a href='/inputs'>Inputs</a></nav>"+(msg.isEmpty()?"":String("<p class='")+(err?"err":"ok")+"'>"+esc(msg)+"</p>")+"</header><form id=network-form class=card method=post action=/save><h2>Wi-Fi / OSC送信先</h2><label>SSID<input name=ssid maxlength=32 required value='"+esc(ssid)+"'></label><label>Password<input name=password type=password maxlength=64 placeholder='変更しない場合は空欄'></label><label>Host / IP<input name=host maxlength=253 required value='"+esc(oscHost)+"'></label><label>Port<input name=port type=number min=1 max=65535 required value='"+oscPort+"'></label><button class=save>保存して再起動</button></form><form id=reset-form class=card method=post action=/reset><button class=del>設定をリセット</button></form><script>async function postForm(event){event.preventDefault();const form=event.currentTarget;if(form.id==='reset-form'&&!confirm('保存設定を削除しますか？'))return;const button=form.querySelector('button'),body=new URLSearchParams(new FormData(form));body.set('ajax','1');button.disabled=true;try{const response=await fetch(form.action,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});const message=await response.text();if(!response.ok)throw new Error(message);let toast=document.getElementById('network-toast');if(!toast){toast=document.createElement('div');toast.id='network-toast';toast.className='toast';document.body.appendChild(toast)}toast.textContent=message;toast.hidden=false}catch(error){alert(error.message||'操作を完了できませんでした。');button.disabled=false}}document.getElementById('network-form').addEventListener('submit',postForm);document.getElementById('reset-form').addEventListener('submit',postForm)</script></main></body></html>";return h;}
+String inputsPrefix(const String& msg="",bool err=false){String h=head("ChainOSCPad Inputs")+js();h+="<header><h1>Input Settings</h1><nav><a href='/'>Network</a><a href='/inputs'>Inputs</a></nav>"+(msg.isEmpty()?"":String("<p class='")+(err?"err":"ok")+"'>"+esc(msg)+"</p>")+"</header><form id='input-form' method=post action='/inputs/save-all'>";return h;}
+String keyCard(uint8_t i){KeyInputSetting& k=inputKeySetting(i);String id="key-body-"+String(i),prefix="k"+String(i)+"_";String h="<section class='card device'><div class=device-head><div class=device-title><button class=collapse type=button onclick=\"toggleCard(this,'"+id+"')\">▼</button><span class='badge badge-type'>Key</span><span>"+esc(k.displayName)+"</span></div><button class=menu type=button>…</button></div><div class=uid>chainoscpad:key:"+String(i+1)+"</div><div class=device-body id='"+id+"'><div class=key-grid><label>デバイス名<input name='"+prefix+"display_name' maxlength=64 required value='"+esc(k.displayName)+"'></label>"+buttonEditor("k"+String(i),prefix,k.button,"キーモード","押すたびに値を進める")+"</div></div></section>";return h;}
+String encoderCard(){EncoderInputSetting& e=inputEncoderSetting();const String prefix="enc_";String h="<section class='card device'><div class=device-head><div class=device-title><button class=collapse type=button onclick=\"toggleCard(this,'encoder-body')\">▼</button><span class='badge badge-type'>Encoder</span><span>"+esc(e.displayName)+"</span></div><button class=menu type=button>…</button></div><div class=uid>chainoscpad:encoder</div><div class=device-body id=encoder-body><div class=key-grid><label>デバイス名<input name='enc_display_name' maxlength=64 required value='"+esc(e.displayName)+"'></label></div><div class=rotation><h3>エンコーダー回転</h3><div class=encgrid><label>OSCアドレス<input name=enc_erot maxlength=192 required value='"+esc(e.rotationAddress)+"'></label><label>モード<select name=enc_emode onchange=encMode(this)><option value=0"+String(!e.sendIncrement?" selected":"")+">絶対値</option><option value=1"+String(e.sendIncrement?" selected":"")+">増分</option></select></label><label class=abs style='display:"+String(e.sendIncrement?"none":"block")+"'>絶対値入力の最小値<input type=number step=any name=enc_eamin value='"+String(e.absoluteInputMin,7)+"'></label><label class=abs style='display:"+String(e.sendIncrement?"none":"block")+"'>絶対値入力の最大値<input type=number step=any name=enc_eamax value='"+String(e.absoluteInputMax,7)+"'></label><label>増分倍率<input type=number step=any name=enc_escale value='"+String(e.incrementScale,7)+"'></label><label>出力最小値<input type=number step=any name=enc_eomin value='"+String(e.outputMin,7)+"'></label><label>出力最大値<input type=number step=any name=enc_eomax value='"+String(e.outputMax,7)+"'></label><label>出力の型"+types("enc_eotype",e.outputType)+"</label></div></div><div class=click><h3>エンコーダークリック</h3>"+buttonEditor("enc",prefix,e.click,"クリックモード","クリックシーケンス")+"</div></div></section>";return h;}
+String inputsSuffix(){return F("<div class=save-bar><button class=save type=submit>すべての設定を保存</button></div></form></main></body></html>");}
+void sendInputsPage(const String& msg="",bool err=false,int status=200){server.setContentLength(CONTENT_LENGTH_UNKNOWN);server.sendHeader("Cache-Control","no-store");server.send(status,"text/html; charset=utf-8","");auto sendChunk=[](String chunk)->bool{if(!server.client().connected())return false;server.sendContent(chunk);chunk.remove(0);yield();return server.client().connected()!=0;};if(!sendChunk(inputsPrefix(msg,err)))return;for(uint8_t i=0;i<KEY_COUNT;++i)if(!sendChunk(keyCard(i)))return;if(!sendChunk(encoderCard()))return;if(!sendChunk(inputsSuffix()))return;server.sendContent("");}
+
+void load(){Preferences p;if(p.begin(PREFS_NAMESPACE,true)){ssid=p.getString("ssid","");password=p.getString("password","");oscHost=p.getString("osc_host",OSC_TARGET_HOST);uint32_t x=p.getUInt("osc_port",OSC_TARGET_PORT);if(x&&x<=65535)oscPort=x;p.end();}}
+bool saveNet(const String&s,const String&pw,const String&h,uint16_t port){Preferences p;if(!p.begin(PREFS_NAMESPACE,false))return false;p.putString("ssid",s);p.putString("password",pw);p.putString("osc_host",h);p.putUInt("osc_port",port);p.end();return true;}
+bool connectSta(){if(ssid.isEmpty())return false;WiFi.mode(WIFI_STA);WiFi.setAutoReconnect(true);WiFi.begin(ssid.c_str(),password.c_str());uint32_t t=millis();while(WiFi.status()!=WL_CONNECTED&&millis()-t<WIFI_CONNECT_TIMEOUT_MS)delay(250);if(WiFi.status()!=WL_CONNECTED)return false;MDNS.begin(WIFI_MDNS_HOST);MDNS.addService("http","tcp",80);Serial.printf("[WiFi] IP=%s\n",WiFi.localIP().toString().c_str());return true;}
+void startAp(){WiFi.disconnect(true);delay(100);WiFi.mode(WIFI_AP);apMode=WiFi.softAP(WIFI_AP_SSID,WIFI_AP_PASSWORD);dns.start(53,"*",WiFi.softAPIP());Serial.printf("[WiFi] AP=%s IP=%s\n",WIFI_AP_SSID,WiFi.softAPIP().toString().c_str());}
+void sendInputResult(int status,const String& message,bool error=false){if(server.hasArg("ajax"))server.send(status,"text/plain; charset=utf-8",message);else sendInputsPage(message,error,status);}
+void routes(){server.on("/",HTTP_GET,[]{server.send(200,"text/html; charset=utf-8",networkPage());});server.on("/inputs",HTTP_GET,[]{sendInputsPage();});
+server.on("/inputs/save-all",HTTP_POST,[]{Serial.println("[Web] Save all input settings begin");KeyInputSetting key;EncoderInputSetting encoder;for(uint8_t i=0;i<KEY_COUNT;++i){if(!parseKey(i,key)){Serial.printf("[Web] Key %u form validation failed\n",static_cast<unsigned>(i+1));sendInputResult(400,"入力設定を保存できませんでした。Key "+String(i+1)+" の内容を確認してください。",true);return;}}if(!parseEncoder(encoder)){Serial.println("[Web] Encoder form validation failed");sendInputResult(400,"入力設定を保存できませんでした。Encoderの内容を確認してください。",true);return;}for(uint8_t i=0;i<KEY_COUNT;++i){if(!parseKey(i,key)||!inputSettingsSaveKey(i,key)){sendInputResult(500,"Key "+String(i+1)+" の設定をストレージへ保存できませんでした。シリアルログの [LittleFS] 行を確認してください。",true);return;}}if(!parseEncoder(encoder)||!inputSettingsSaveEncoder(encoder)){sendInputResult(500,"Encoderの設定をストレージへ保存できませんでした。シリアルログの [LittleFS] 行を確認してください。",true);return;}Serial.println("[Web] Save all input settings complete");sendInputResult(200,"すべての入力設定を保存しました。");});
+server.on("/save",HTTP_POST,[]{String s=server.arg("ssid"),pw=server.arg("password"),h=server.arg("host");s.trim();h.trim();long port=server.arg("port").toInt();if(pw.isEmpty()&&s==ssid)pw=password;if(s.isEmpty()||s.length()>32||pw.length()>64||!hostValid(h)||port<1||port>65535||!saveNet(s,pw,h,port)){if(server.hasArg("ajax"))server.send(400,"text/plain; charset=utf-8","入力内容を確認してください。");else server.send(400,"text/html; charset=utf-8",networkPage("入力内容を確認してください。",true));return;}if(server.hasArg("ajax"))server.send(200,"text/plain; charset=utf-8","保存しました。再起動します。");else server.send(200,"text/html; charset=utf-8",networkPage("保存しました。再起動します。"));scheduleRestart();});
+server.on("/reset",HTTP_POST,[]{Preferences p;bool ok=false;if(p.begin(PREFS_NAMESPACE,false)){ok=p.clear();p.end();}ok=inputSettingsReset()&&ok;String message=ok?"設定を削除しました。再起動します。":"削除できませんでした。";if(server.hasArg("ajax"))server.send(ok?200:500,"text/plain; charset=utf-8",message);else server.send(ok?200:500,"text/html; charset=utf-8",networkPage(message,!ok));if(ok)scheduleRestart();});
+server.onNotFound([](){if(apMode){server.sendHeader("Location","http://192.168.4.1/",true);server.send(302,"text/plain","");}else server.send(404,"text/plain","Not found");});server.begin();}
 }
 
-bool validOscHost(const String& host) {
-  if (host.isEmpty() || host.length() > 253) return false;
-  for (size_t i = 0; i < host.length(); ++i) {
-    if (isWhitespace(host[i]) || host[i] == '/' || host[i] == ':') return false;
-  }
-  return true;
-}
-
-void loadSettings() {
-  Preferences preferences;
-  if (preferences.begin(PREFS_NAMESPACE, true)) {
-    configuredSsid = preferences.getString("ssid", "");
-    configuredPassword = preferences.getString("password", "");
-    oscHost = preferences.getString("osc_host", OSC_TARGET_HOST);
-    const uint32_t storedPort = preferences.getUInt("osc_port", OSC_TARGET_PORT);
-    if (storedPort >= 1 && storedPort <= 65535) {
-      oscPort = static_cast<uint16_t>(storedPort);
-    }
-    preferences.end();
-  }
-
-}
-
-bool saveSettings(const String& ssid, const String& password,
-                  const String& host, uint16_t port) {
-  Preferences preferences;
-  if (!preferences.begin(PREFS_NAMESPACE, false)) return false;
-  preferences.putString("ssid", ssid);
-  preferences.putString("password", password);
-  preferences.putString("osc_host", host);
-  preferences.putUInt("osc_port", port);
-  preferences.end();
-
-  if (!preferences.begin(PREFS_NAMESPACE, true)) return false;
-  const bool ok = preferences.getString("ssid", "") == ssid &&
-                  preferences.getString("password", "") == password &&
-                  preferences.getString("osc_host", "") == host &&
-                  preferences.getUInt("osc_port", 0) == port;
-  preferences.end();
-  return ok;
-}
-
-String page(const String& message = "", bool error = false) {
-  const bool connected = WiFi.status() == WL_CONNECTED;
-  String body;
-  body.reserve(5000);
-  body += F("<!doctype html><html lang='ja'><head><meta charset='utf-8'>");
-  body += F("<meta name='viewport' content='width=device-width,initial-scale=1'>");
-  body += F("<title>ChainOSCPad Settings</title><style>");
-  body += F("body{font-family:system-ui,sans-serif;background:#f4f6f8;color:#1f2937;margin:0;padding:20px}");
-  body += F("main{max-width:620px;margin:auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 8px 30px #0001}");
-  body += F("h1{margin-top:0}label{display:block;margin-top:16px;font-weight:600}");
-  body += F("input{box-sizing:border-box;width:100%;padding:11px;margin-top:6px;border:1px solid #ccd3dc;border-radius:8px;font-size:16px}");
-  body += F("button{margin-top:22px;padding:11px 18px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-size:15px;cursor:pointer}");
-  body += F(".danger{background:#b91c1c}.status{padding:12px;border-radius:8px;background:#eef2ff}.ok{color:#166534}.err{color:#b91c1c}.hint{color:#64748b;font-size:14px}</style></head><body><main>");
-  body += F("<h1>ChainOSCPad</h1><p class='status'>Version ");
-  body += APP_VERSION;
-  body += connected ? F(" / Wi-Fi接続済み / IP: ") : F(" / 設定APモード / IP: ");
-  body += connected ? WiFi.localIP().toString() : WiFi.softAPIP().toString();
-  body += F("</p>");
-  if (!message.isEmpty()) {
-    body += error ? F("<p class='err'>") : F("<p class='ok'>");
-    body += htmlEscape(message);
-    body += F("</p>");
-  }
-  body += F("<form method='post' action='/save'><h2>Wi-Fi</h2><label>SSID<input name='ssid' maxlength='32' required value='");
-  body += htmlEscape(configuredSsid);
-  body += F("'></label><label>Password<input name='password' type='password' maxlength='64' placeholder='変更しない場合は空欄'></label>");
-  body += F("<p class='hint'>保存済みパスワードは画面に表示しません。</p><h2>OSC送信先</h2>");
-  body += F("<label>Host / IP address<input name='host' maxlength='253' required value='");
-  body += htmlEscape(oscHost);
-  body += F("'></label><label>Port<input name='port' type='number' min='1' max='65535' required value='");
-  body += String(oscPort);
-  body += F("'></label><button type='submit'>保存して再起動</button></form>");
-  body += F("<form method='post' action='/reset' onsubmit=\"return confirm('保存設定を削除しますか？')\"><button class='danger' type='submit'>設定をリセット</button></form>");
-  body += F("<p class='hint'>信頼できるローカルネットワークで使用してください。この設定画面に認証機能はありません。</p>");
-  body += F("</main></body></html>");
-  return body;
-}
-
-void scheduleRestart() {
-  restartPending = true;
-  restartAtMs = millis() + NETWORK_RESTART_DELAY_MS;
-}
-
-void setupWebServer() {
-  webServer.on("/", HTTP_GET, []() {
-    webServer.send(200, "text/html; charset=utf-8", page());
-  });
-
-  webServer.on("/save", HTTP_POST, []() {
-    String ssid = webServer.arg("ssid");
-    String password = webServer.arg("password");
-    String host = webServer.arg("host");
-    ssid.trim();
-    host.trim();
-    const long portValue = webServer.arg("port").toInt();
-
-    if (ssid.isEmpty() || ssid.length() > 32 || password.length() > 64 ||
-        !validOscHost(host) || portValue < 1 || portValue > 65535) {
-      webServer.send(400, "text/html; charset=utf-8",
-                     page("入力内容を確認してください。", true));
-      return;
-    }
-    // Empty means "keep the password" only when editing the same SSID. For a
-    // new SSID it intentionally represents an open network.
-    if (password.isEmpty() && ssid == configuredSsid) {
-      password = configuredPassword;
-    }
-    if (!saveSettings(ssid, password, host, static_cast<uint16_t>(portValue))) {
-      webServer.send(500, "text/html; charset=utf-8",
-                     page("設定を保存できませんでした。", true));
-      return;
-    }
-    webServer.send(200, "text/html; charset=utf-8",
-                   page("設定を保存しました。再起動します。"));
-    scheduleRestart();
-  });
-
-  webServer.on("/reset", HTTP_POST, []() {
-    Preferences preferences;
-    bool cleared = false;
-    if (preferences.begin(PREFS_NAMESPACE, false)) {
-      cleared = preferences.clear();
-      preferences.end();
-    }
-    if (!cleared) {
-      webServer.send(500, "text/html; charset=utf-8",
-                     page("設定を削除できませんでした。", true));
-      return;
-    }
-    webServer.send(200, "text/html; charset=utf-8",
-                   page("設定を削除しました。再起動します。"));
-    scheduleRestart();
-  });
-
-  // Common captive-portal probes.
-  webServer.on("/generate_204", HTTP_ANY, []() { webServer.sendHeader("Location", "/", true); webServer.send(302, "text/plain", ""); });
-  webServer.on("/hotspot-detect.html", HTTP_ANY, []() { webServer.sendHeader("Location", "/", true); webServer.send(302, "text/plain", ""); });
-  webServer.on("/connecttest.txt", HTTP_ANY, []() { webServer.sendHeader("Location", "/", true); webServer.send(302, "text/plain", ""); });
-  webServer.onNotFound([]() {
-    if (accessPointMode) {
-      webServer.sendHeader("Location", String("http://") + WiFi.softAPIP().toString() + "/", true);
-      webServer.send(302, "text/plain", "");
-    } else {
-      webServer.send(404, "text/plain", "Not found");
-    }
-  });
-  webServer.begin();
-  Serial.println("[Web] HTTP server started");
-}
-
-void startAccessPoint() {
-  WiFi.disconnect(true);
-  delay(100);
-  WiFi.mode(WIFI_AP);
-  accessPointMode = WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASSWORD);
-  if (!accessPointMode) {
-    Serial.println("[WiFi] Failed to start setup AP");
-    return;
-  }
-  dnsServer.start(53, "*", WiFi.softAPIP());
-  Serial.printf("[WiFi] Setup AP=%s IP=%s password=%s\n", WIFI_AP_SSID,
-                WiFi.softAPIP().toString().c_str(), WIFI_AP_PASSWORD);
-}
-
-bool connectStation() {
-  if (configuredSsid.isEmpty()) return false;
-  WiFi.mode(WIFI_STA);
-  WiFi.setAutoReconnect(true);
-  WiFi.begin(configuredSsid.c_str(), configuredPassword.c_str());
-  Serial.printf("[WiFi] Connecting to %s", configuredSsid.c_str());
-  const uint32_t startedAt = millis();
-  while (WiFi.status() != WL_CONNECTED &&
-         millis() - startedAt < WIFI_CONNECT_TIMEOUT_MS) {
-    delay(250);
-    Serial.print('.');
-  }
-  Serial.println();
-  if (WiFi.status() != WL_CONNECTED) return false;
-  Serial.printf("[WiFi] Connected IP=%s\n", WiFi.localIP().toString().c_str());
-  mdnsStarted = MDNS.begin(WIFI_MDNS_HOST);
-  if (mdnsStarted) {
-    MDNS.addService("http", "tcp", 80);
-    Serial.printf("[mDNS] http://%s.local/\n", WIFI_MDNS_HOST);
-  }
-  return true;
-}
-
-}  // namespace
-
-void networkSetup() {
-  loadSettings();
-  if (!connectStation()) startAccessPoint();
-  setupWebServer();
-  Serial.printf("[OSC] target=%s:%u\n", oscHost.c_str(), oscPort);
-}
-
-void networkLoop() {
-  if (accessPointMode) dnsServer.processNextRequest();
-  webServer.handleClient();
-  if (restartPending && static_cast<int32_t>(millis() - restartAtMs) >= 0) {
-    ESP.restart();
-  }
-}
-
-bool networkIsConnected() { return WiFi.status() == WL_CONNECTED; }
-bool networkIsAccessPoint() { return accessPointMode; }
-const String& networkOscHost() { return oscHost; }
-uint16_t networkOscPort() { return oscPort; }
+void networkSetup(){load();if(!connectSta())startAp();routes();Serial.printf("[OSC] target=%s:%u\n",oscHost.c_str(),oscPort);}
+void networkLoop(){if(apMode)dns.processNextRequest();server.handleClient();if(restartPending&&(int32_t)(millis()-restartAt)>=0)ESP.restart();}
+bool networkIsConnected(){return WiFi.status()==WL_CONNECTED;}
+bool networkIsAccessPoint(){return apMode;}
+const String& networkOscHost(){return oscHost;}
+uint16_t networkOscPort(){return oscPort;}
