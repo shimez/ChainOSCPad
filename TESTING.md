@@ -1,4 +1,4 @@
-# Version 0.4.1 実機確認
+# Version 0.4.2 実機確認
 
 ## 言語
 
@@ -79,6 +79,10 @@
 - [x] PressまたはReleaseを0件にして、その操作では送信されない
 - [x] 上下矢印で変更した順番どおりに複数メッセージが送信される
 - [x] KeyのSequenceがStartからStepずつ進み、Endを超えるとStartへ戻る
+- [x] Wi-Fi切断中にKeyのSequenceを押してもOSCが送信されず、Sequence値も進まない
+- [x] Wi-Fi再接続後にKeyのSequenceを押すと、切断前の次の値から送信を再開する
+- [x] Wi-Fi切断中にEncoder ClickのSequenceを押してもOSCが送信されず、Sequence値も進まない
+- [x] Wi-Fi再接続後にEncoder ClickのSequenceを押すと、切断前の次の値から送信を再開する
 - [x] Key／Encoder ClickのSequenceをString型で送信できる
 - [x] EncoderをAbsoluteモードで送信できる
 - [x] 出力範囲を`-1`～`1`に設定し、EncoderをIncrementモードで正負方向へ送信できる

@@ -58,34 +58,37 @@ void sendConfiguredMessage(const OscMessageSetting& message) {
   logSent(message.address, message.value, message.type);
 }
 
-void sendMappedValue(const String& address, float mapped,
+bool sendMappedValue(const String& address, float mapped,
                      OscValueType type) {
   String text;
   if (type == OSC_TYPE_INT) {
     const int value = static_cast<int>(lroundf(mapped));
     text = String(value);
-    if (!oscReady(address, text)) return;
+    if (!oscReady(address, text)) return false;
     OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
                  value);
   } else if (type == OSC_TYPE_STRING) {
     text = String(mapped, 3);
-    if (!oscReady(address, text)) return;
+    if (!oscReady(address, text)) return false;
     OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
                  text.c_str());
   } else {
     text = String(mapped, 3);
-    if (!oscReady(address, text)) return;
+    if (!oscReady(address, text)) return false;
     OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
                  mapped);
   }
   logSent(address, text, type);
+  return true;
 }
 
 void sendButton(ButtonInputSetting& setting, bool pressed) {
   if (setting.mode == INPUT_MODE_SEQUENCE) {
     if (!pressed) return;
     SequenceSetting& sequence = setting.sequence;
-    sendMappedValue(sequence.address, sequence.current, sequence.type);
+    if (!sendMappedValue(sequence.address, sequence.current, sequence.type)) {
+      return;
+    }
     float next = sequence.current + sequence.step;
     if ((sequence.step >= 0 && next > sequence.end + 1e-6f) ||
         (sequence.step < 0 && next < sequence.end - 1e-6f)) {

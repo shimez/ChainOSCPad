@@ -31,6 +31,8 @@ KeyInputSetting& inputKeySetting(uint8_t index);
 EncoderInputSetting& inputEncoderSetting();
 bool inputSettingsSaveKey(uint8_t index,const KeyInputSetting& setting);
 bool inputSettingsSaveEncoder(const EncoderInputSetting& setting);
+bool inputSettingsResetKey(uint8_t index);
+bool inputSettingsResetEncoder();
 bool inputSettingsReset();
 bool inputOscAddressValid(const String& address);
 bool inputOscMessageValid(const OscMessageSetting& message);

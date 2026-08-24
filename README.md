@@ -3,7 +3,7 @@
 XIAO ESP32S3、3列×4行キーマトリクス、ロータリーエンコーダーを使う
 Wi-Fi OSCコントローラーです。
 
-## Version 0.4.1
+## Version 0.4.2
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定

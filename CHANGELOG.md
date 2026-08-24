@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+- Match ChainOSCmini Sequence behavior while Wi-Fi is disconnected
+- Keep Key and Encoder Click Sequence values unchanged when OSC cannot be sent
+- Add hardware tests for Sequence behavior across Wi-Fi disconnection and reconnection
+
 ## 0.4.1
 
 - Unify whole-settings JSON import limits at 64 KiB in the Web UI and firmware
