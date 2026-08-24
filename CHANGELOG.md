@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0
+
+- Add versioned whole-settings JSON export and import without Wi-Fi credentials
+- Add ChainOSC-compatible Key and Encoder preset export and import
+- Validate JSON format, schema version, device identity, OSC fields, and size before saving
+- Allow whole-settings JSON files up to 64 KiB so all 12 maximized Keys can be restored
+- Restore previous input settings if a whole-settings storage write fails
+- Stream whole-settings JSON export one device at a time
+- Add English and Japanese Web UI with persistent language selection
+- Select the browser language on the first Web UI visit
+- Add localized import progress, confirmation, validation, and storage messages
+- Combine network, JSON backup, Key, and Encoder settings into one Web UI page
+- Update the firmware version to 0.4.0 and add ArduinoJson to both build workflows
+
 ## 0.3.0
 
 - Add per-key OSC Address, Press value, Release value, and value type settings

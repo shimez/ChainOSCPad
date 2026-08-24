@@ -3,7 +3,7 @@
 XIAO ESP32S3、3列×4行キーマトリクス、ロータリーエンコーダーを使う
 Wi-Fi OSCコントローラーです。
 
-## Version 0.3.0
+## Version 0.4.0
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
@@ -15,6 +15,9 @@ Wi-Fi OSCコントローラーです。
 - Encoder回転のAbsolute／Increment、入出力範囲、出力型を設定
 - Encoder ClickのPress／Release複数メッセージとSequenceを設定
 - 入力設定をLittleFSへ保存
+- 全体設定をバージョン付きJSONでエクスポート／インポート（Wi-Fi認証情報を除外）
+- Key／EncoderプリセットをChainOSC共通JSON形式でエクスポート／インポート
+- Web UIの日本語／英語切り替えと選択言語の保存
 
 変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
 実機確認項目は[TESTING.md](TESTING.md)にまとめています。
@@ -44,8 +47,8 @@ Wi-Fi OSCコントローラーです。
 
 ## 入力設定
 
-Wi-Fi接続後に`http://chainoscpad.local/inputs`を開くか、設定画面上部の`Inputs`を
-選択します。
+Wi-Fi接続後に`http://chainoscpad.local/`を開きます。Wi-Fi／OSC送信先、JSONの
+バックアップと復元、Key 1～12、Encoderは1つの設定画面に表示されます。
 
 - Key 1～12：`Press / Release`または`Sequence`を選択
 - Press／Release：合計最大8メッセージ、0件可。OSC Address、型、値、送信順を設定
@@ -56,6 +59,10 @@ Wi-Fi接続後に`http://chainoscpad.local/inputs`を開くか、設定画面上
 
 全項目を検証してからLittleFSへ保存し、その場で動作へ反映します。Float／Intで
 数値として解釈できない値や、`/`で始まらないOSC Addressは拒否されます。
+
+各デバイスカードの`…`メニューからプリセットをJSONで入出力できます。ネットワーク
+画面の「設定のバックアップと復元」では、OSC送信先、UI言語、12 Key、Encoderを
+まとめて入出力します。全体設定JSONにWi-FiのSSIDとパスワードは含まれません。
 
 ## 配線
 
@@ -116,7 +123,7 @@ Version 0.2.0ではWi-FiとOSC送信先をブラウザーから設定するた�
 
 1. Arduino IDEのBoards ManagerでEspressif Systemsの`esp32`ボードパッケージを
    インストールします。
-2. Library Managerで`ArduinoOSC`をインストールします。
+2. Library Managerで`ArduinoOSC`と`ArduinoJson`をインストールします。
 3. ルートの`ChainOSCPad.ino`をArduino IDEで開きます。
 4. ボードを`XIAO_ESP32S3`または`Seeed XIAO ESP32S3`に設定します。
 5. `USB CDC On Boot`を`Enabled`にします。
