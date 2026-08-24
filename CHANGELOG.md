@@ -5,6 +5,8 @@
 - Match ChainOSCmini Sequence behavior while Wi-Fi is disconnected
 - Keep Key and Encoder Click Sequence values unchanged when OSC cannot be sent
 - Add hardware tests for Sequence behavior across Wi-Fi disconnection and reconnection
+- License the original software, Web UI, and documentation under the MIT License
+- Document third-party software licenses and copyright notices
 
 ## 0.4.1
 
