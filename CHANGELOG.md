@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0
+
+- Reject a Sequence with a zero Step
+- Reject a Sequence whose Step moves away from End
+- Stop automatically correcting Sequence values during preset import, whole-settings import, Web UI save, and storage load
+- Use the same Sequence validation rules for Key and Encoder Click settings
+- Separate the captive portal into a Wi-Fi-only setup page
+- Reorganize the normal settings page to match the ChainOSC series: Language, System, WiFi, backup and restore, OSC target, then input settings
+- Add Product, Version, IP address, and mDNS information to the System card
+- Replace editable Wi-Fi credentials on the normal page with a Wi-Fi settings delete action
+- Preserve OSC and input settings when Wi-Fi credentials are deleted
+- Save OSC target settings independently without restarting or changing the browser URL
+- Add comfortable margins on wide browser windows
+- Match the ChainOSC Sequence editor layout with a full-width OSC Address and four parameter tiles
+- Update the hardware test checklist for the new validation and Web UI behavior
+
 ## 0.4.2
 
 - Match ChainOSCmini Sequence behavior while Wi-Fi is disconnected

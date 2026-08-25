@@ -71,14 +71,16 @@ bool jsonSequence(JsonObjectConst object, SequenceSetting& sequence,
   sequence.start = object["start"].as<float>();
   sequence.end = object["end"].as<float>();
   sequence.step = object["step"].as<float>();
-  if (type < OSC_TYPE_FLOAT || type > OSC_TYPE_STRING ||
-      !inputOscAddressValid(sequence.address) || !isfinite(sequence.start) ||
-      !isfinite(sequence.end) || !isfinite(sequence.step)) {
+  if (type < OSC_TYPE_FLOAT || type > OSC_TYPE_STRING) {
     error = "Sequence values are invalid.";
     return false;
   }
   sequence.type = static_cast<OscValueType>(type);
-  inputNormalizeSequence(sequence);
+  if (!inputSequenceSettingValid(sequence)) {
+    error = "Sequence Step must be non-zero and move from Start toward End.";
+    return false;
+  }
+  sequence.current = sequence.start;
   return true;
 }
 
