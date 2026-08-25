@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.1
+
+- Add a sticky Key Layout Guide showing the 3 x 4 key matrix and Encoder position
+- Highlight every Key and Encoder card currently visible in the viewport
+- Highlight only the corresponding Key or Encoder when its settings card is operated
+- Scroll to a settings card by selecting its position in the guide
+- Add a left-aligned control that collapses and expands the entire guide content
+- Add hardware test checklist items for the Key Layout Guide behavior
+
 ## 0.5.0
 
 - Reject a Sequence with a zero Step

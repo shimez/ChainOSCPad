@@ -17,7 +17,7 @@ inline constexpr uint16_t OSC_TARGET_PORT = 9000;
 #endif
 
 inline constexpr char APP_NAME[] = "ChainOSCPad";
-inline constexpr char APP_VERSION[] = "0.5.0";
+inline constexpr char APP_VERSION[] = "0.5.1";
 inline constexpr char WIFI_AP_SSID[] = "ChainOSCPad-Setup";
 inline constexpr char WIFI_AP_PASSWORD[] = "12345678";
 inline constexpr char WIFI_MDNS_HOST[] = "chainoscpad";
