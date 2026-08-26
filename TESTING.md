@@ -35,9 +35,9 @@
 - [x] 再起動後も選択した言語が保持される
 - [x] ネットワーク、入力設定、追加したOSC行、確認・エラー表示が選択言語になる
 - [x] 通常のルート画面に言語、システム、WiFi、JSON、OSC、Key 1～12、Encoderが順番どおり表示される
-- [ ] XIAO ESP32S3版のシステム欄に`XIAO ESP32S3`と表示される
-- [ ] XIAO ESP32C6版のシステム欄に`XIAO ESP32C6`と表示される
-- [ ] システム欄に製品名、ハードウェア、バージョン、IPアドレス、mDNS名が表示される
+- [x] XIAO ESP32S3版のシステム欄に`XIAO ESP32S3`と表示される
+- [x] XIAO ESP32C6版のシステム欄に`XIAO ESP32C6`と表示される
+- [x] システム欄に製品名、ハードウェア、バージョン、IPアドレス、mDNS名が表示される
 - [x] 横幅の広いブラウザーで通常画面の左右に適度な余白が表示される
 - [x] 「ネットワーク」「入力設定」のページ切り替えナビゲーションが表示されない
 
@@ -148,10 +148,10 @@
 
 ## ポータル／Release自動化
 
-- [ ] 製品ポータルから日本語／英語のクイックスタートとユーザーガイドを開ける
-- [ ] 製品ポータルからWeb Installerを開ける
-- [ ] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C6の統合binとmanifestを検証できる
-- [ ] `vX.Y.Z`タグと`APP_VERSION`／Installer manifestのバージョンが異なる場合、Releaseビルドが失敗する
-- [ ] 正しい`vX.Y.Z`タグでS3/C6の統合binとSHA-256を添付したDraft Releaseが作成される
-- [ ] Draft Releaseを公開すると、同じバージョンのファームウェアを使用するGitHub Pagesが公開される
-- [ ] 公開済みReleaseがないバージョンでは、現在のGitHub Pagesが置き換えられない
+- [x] 製品ポータルから日本語／英語のクイックスタートとユーザーガイドを開ける
+- [x] 製品ポータルからWeb Installerを開ける
+- [x] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C6の統合binとmanifestを検証できる
+- [x] `vX.Y.Z`タグと`APP_VERSION`／Installer manifestのバージョンが異なる場合、Releaseビルドが失敗する
+- [x] 正しい`vX.Y.Z`タグでS3/C6の統合binとSHA-256を添付したDraft Releaseが作成される
+- [x] Draft Releaseを公開すると、同じバージョンのファームウェアを使用するGitHub Pagesが公開される
+- [x] 公開済みReleaseがないバージョンでは、現在のGitHub Pagesが置き換えられない
