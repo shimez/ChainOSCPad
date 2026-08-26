@@ -1,5 +1,9 @@
 # ChainOSCPad
 
+このプロジェクトのソフトウェア、Webサイト、ドキュメントは、OpenAI Codexとの協働により制作されています。
+
+This project's software, website, and documentation are created in collaboration with OpenAI Codex.
+
 XIAO ESP32S3／ESP32C6に対応した、3列×4行キーマトリクスと
 ロータリーエンコーダーを搭載するWi-Fi OSCコントローラーです。
 
