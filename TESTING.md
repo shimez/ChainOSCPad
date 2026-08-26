@@ -143,3 +143,13 @@
 - [x] Encoder Clickの複数メッセージ、0件、並べ替え、Sequenceが動作する
 - [x] 電源を抜き差ししても入力設定が保持される
 - [x] 設定リセット後、入力設定が初期値へ戻る
+
+## ポータル／Release自動化
+
+- [ ] 製品ポータルから日本語／英語のクイックスタートとユーザーガイドを開ける
+- [ ] 製品ポータルからWeb Installerを開ける
+- [ ] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C6の統合binとmanifestを検証できる
+- [ ] `vX.Y.Z`タグと`APP_VERSION`／Installer manifestのバージョンが異なる場合、Releaseビルドが失敗する
+- [ ] 正しい`vX.Y.Z`タグでS3/C6の統合binとSHA-256を添付したDraft Releaseが作成される
+- [ ] Draft Releaseを公開すると、同じバージョンのファームウェアを使用するGitHub Pagesが公開される
+- [ ] 公開済みReleaseがないバージョンでは、現在のGitHub Pagesが置き換えられない

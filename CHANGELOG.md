@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add Japanese and English Quick Start and User Guide pages matching the ChainOSCmini portal structure
+- Align release automation with ChainOSCmini by validating tag and manifest versions, creating merged S3/C6 firmware and SHA-256 files, and creating a draft GitHub Release
+- Deploy Web Installer firmware only from a matching published GitHub Release
+
 ## 0.6.0
 
 - Add XIAO ESP32C6 support alongside ESP32S3, including board-specific build environments, GPIO documentation, and hardware tests

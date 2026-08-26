@@ -24,13 +24,13 @@
   <header class="hero">
     <h1>ChainOSCPad</h1>
     <p class="lead">XIAO ESP32S3／ESP32C6へファームウェアをブラウザーからインストールできます。</p>
-    <span class="version">Stable version <span id="firmware-version">0.6.0</span></span>
+    <span class="version">Stable version 0.6.0</span>
     <p class="unofficial">ChainOSCPadは個人が開発する非公式プロジェクトです。Seeed Studioその他のハードウェアメーカーによる公式製品ではありません。</p>
   </header>
   <section class="card" aria-labelledby="installer-title">
     <h2 id="installer-title">Web Installer</h2>
     <p>XIAOをデータ通信対応USBケーブルでPCへ接続し、下のボタンからシリアルポートを選択してください。接続したS3／C6に合うファームウェアが自動的に選択されます。</p>
-    <div class="install"><esp-web-install-button manifest="../manifest.json"><button slot="activate">Install ChainOSCPad</button><span slot="unsupported">このブラウザーはWeb Serialに対応していません。デスクトップ版ChromeまたはEdgeを使用してください。</span></esp-web-install-button></div>
+    <div class="install"><esp-web-install-button manifest="manifest.json"><button slot="activate">Install ChainOSCPad</button><span slot="unsupported">このブラウザーはWeb Serialに対応していません。デスクトップ版ChromeまたはEdgeを使用してください。</span></esp-web-install-button></div>
     <ol><li>XIAOをデータ通信対応のUSBケーブルで接続します。</li><li>「Install ChainOSCPad」を押し、XIAOのシリアルポートを選びます。</li><li>画面の案内に従ってインストールを完了します。</li></ol>
     <div class="note">ポートが表示されない場合は、XIAOのBOOTボタンを押しながらUSBへ接続し、ダウンロードモードを試してください。</div>
     <div class="warning">再インストールや消去を行う前に、必要な設定をWeb UIの「設定をエクスポート（JSON）」でバックアップしてください。</div>
@@ -44,5 +44,5 @@
     <div class="history"><h3>Version History</h3><p><strong>Version 0.6.0:</strong> XIAO ESP32C6へ対応し、ESP32S3／ESP32C6の自動ビルド、Web Installer、OSC送信先と入力設定の一括保存を追加しました。</p><p><strong>Version 0.5.1:</strong> 12キーとEncoderの現在位置を確認できるキー配置ガイドを追加しました。</p><p><strong>Version 0.5.0:</strong> Sequence検証と通常設定画面をChainOSCシリーズの仕様へ統一しました。</p></div>
   </section>
   <footer><div><a href="https://github.com/shimez/ChainOSCPad">GitHub</a> · ChainOSCPad Web Installer</div><p>ChainOSCPadの独自部分は<a href="https://github.com/shimez/ChainOSCPad/blob/main/LICENSE">MIT License</a>で提供されます。配布ファームウェアには別ライセンスの第三者コンポーネントが含まれます。詳細は<a href="https://github.com/shimez/ChainOSCPad/blob/main/THIRD_PARTY_NOTICES.md">Third-Party Notices</a>を参照してください。</p></footer>
-</main><script>fetch('../manifest.json').then(response=>response.json()).then(manifest=>{if(manifest.version&&!manifest.version.includes('__'))document.getElementById('firmware-version').textContent=manifest.version}).catch(()=>{});</script></body>
+</main></body>
 </html>

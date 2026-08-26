@@ -164,15 +164,18 @@ pio device monitor --baud 115200
 
 ## 自動ビルドとWeb Installer
 
-GitHub Actionsは`main`へのpush、`v*`タグ、Pull Request、手動実行で
-`xiao_esp32s3`と`xiao_esp32c6`を個別にビルドします。Actions画面から各環境の
-ファームウェア一式をArtifactとしてダウンロードできます。
+`vX.Y.Z`タグのpushまたは手動実行で、GitHub Actionsが`xiao_esp32s3`と
+`xiao_esp32c6`を個別にビルドします。各環境の統合書き込み用binとSHA-256を
+Actions Artifactとして保存し、タグ実行時は両環境のファイルを添付したDraft Releaseを
+自動作成します。内容を確認してDraftを公開してください。
 
 GitHub Pagesの製品ポータル、Web Installer、製品アイコンは`docs/`に格納しています。
 
-`main`へのpushまたは`v*`タグでは、製品ポータルと両環境を収録したESP Web Tools
-ページもGitHub Pagesへ公開します。初回のみGitHubリポジトリの`Settings` → `Pages` →
-`Build and deployment`でSourceを`GitHub Actions`に設定してください。公開先は通常、
+Pagesは`docs/`の変更またはReleaseの公開を検知します。manifestと同じバージョンの
+公開済みReleaseが存在する場合だけ、Releaseから両環境の統合binを取得して製品ポータルと
+Web InstallerをGitHub Pagesへ公開します。Draftの間は現在の公開ページを維持します。
+初回のみGitHubリポジトリの`Settings` → `Pages` → `Build and deployment`でSourceを
+`GitHub Actions`に設定してください。公開先は通常、
 `https://shimez.github.io/ChainOSCPad/`です。ポータルのWeb Installerリンクから
 `https://shimez.github.io/ChainOSCPad/installer/`を開き、PC版Google Chromeまたは
 Microsoft Edgeで接続したXIAOへ書き込めます。チップに合うS3/C6ファームウェアは
@@ -180,7 +183,7 @@ Microsoft Edgeで接続したXIAOへ書き込めます。チップに合うS3/C6
 
 ### Web Installerを公開前にテストする
 
-PowerShellで次を実行すると、S3/C6をビルドしてmanifestとファームウェア構成を検証し、
+PowerShellで次を実行すると、S3/C6をビルドして統合binを生成し、manifestとファームウェア構成を検証して、
 ローカルWeb Installerを`http://127.0.0.1:8765/installer/`で起動します。
 
 ```powershell

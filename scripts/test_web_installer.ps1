@@ -37,9 +37,18 @@ New-Item -ItemType Directory -Path $site | Out-Null
 Copy-Item -Path (Join-Path $repo 'docs\*') -Destination $site -Recurse -Force
 
 $targets = @(
-  @{ Environment = 'xiao_esp32s3'; ChipFamily = 'ESP32-S3' },
-  @{ Environment = 'xiao_esp32c6'; ChipFamily = 'ESP32-C6' }
+  @{ Environment = 'xiao_esp32s3'; ChipFamily = 'ESP32-S3'; Slug = 'XIAO-ESP32S3'; Chip = 'esp32s3'; FlashSize = '8MB' },
+  @{ Environment = 'xiao_esp32c6'; ChipFamily = 'ESP32-C6'; Slug = 'XIAO-ESP32C6'; Chip = 'esp32c6'; FlashSize = '4MB' }
 )
+
+$config = Get-Content (Join-Path $repo 'include\config.h') -Raw
+$versionMatch = [regex]::Match($config, 'APP_VERSION\[\]\s*=\s*"([^"]+)"')
+if (-not $versionMatch.Success) {
+  throw 'APP_VERSION was not found in include/config.h.'
+}
+$version = $versionMatch.Groups[1].Value
+$firmwareDirectory = Join-Path $site 'installer\firmware'
+New-Item -ItemType Directory -Path $firmwareDirectory -Force | Out-Null
 
 foreach ($target in $targets) {
   $environment = $target.Environment
@@ -52,14 +61,11 @@ foreach ($target in $targets) {
   }
 
   $build = Join-Path $repo ".pio\build\$environment"
-  $output = Join-Path $site "firmware\$environment"
-  New-Item -ItemType Directory -Path $output -Force | Out-Null
   foreach ($name in @('bootloader.bin', 'partitions.bin', 'firmware.bin')) {
     $source = Join-Path $build $name
     if (-not (Test-Path -LiteralPath $source)) {
       throw "Missing $source. Build $environment first or omit -SkipBuild."
     }
-    Copy-Item -LiteralPath $source -Destination (Join-Path $output $name) -Force
   }
 
   $bootApp = Get-ChildItem (Join-Path $env:USERPROFILE '.platformio\packages') -Recurse -File -Filter boot_app0.bin |
@@ -68,46 +74,49 @@ foreach ($target in $targets) {
   if (-not $bootApp) {
     throw 'boot_app0.bin was not found in the PlatformIO packages.'
   }
-  Copy-Item -LiteralPath $bootApp.FullName -Destination (Join-Path $output 'boot_app0.bin') -Force
+  $esptool = Get-ChildItem (Join-Path $env:USERPROFILE '.platformio\packages') -Recurse -File -Filter esptool.py |
+    Where-Object { $_.FullName -match '[\\/]tool-esptoolpy[\\/]esptool\.py$' } |
+    Select-Object -First 1
+  if (-not $esptool) {
+    throw 'esptool.py was not found in the PlatformIO packages.'
+  }
+
+  $firmwareName = "ChainOSCPad-$version-$($target.Slug)-merged.bin"
+  $mergedFirmware = Join-Path $firmwareDirectory $firmwareName
+  & $python $esptool.FullName --chip $target.Chip merge_bin -o $mergedFirmware `
+    --flash_mode dio --flash_freq 80m --flash_size $target.FlashSize `
+    0x0 (Join-Path $build 'bootloader.bin') `
+    0x8000 (Join-Path $build 'partitions.bin') `
+    0xe000 $bootApp.FullName `
+    0x10000 (Join-Path $build 'firmware.bin')
+  if ($LASTEXITCODE -ne 0) {
+    throw "Failed to create merged firmware: $environment"
+  }
 }
 
-$config = Get-Content (Join-Path $repo 'include\config.h') -Raw
-$versionMatch = [regex]::Match($config, 'APP_VERSION\[\]\s*=\s*"([^"]+)"')
-if (-not $versionMatch.Success) {
-  throw 'APP_VERSION was not found in include/config.h.'
-}
-$version = $versionMatch.Groups[1].Value
-$manifestPath = Join-Path $site 'manifest.json'
-$manifestText = (Get-Content $manifestPath -Raw).Replace('__VERSION__', $version)
-$utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
-[IO.File]::WriteAllText($manifestPath, $manifestText, $utf8WithoutBom)
+$manifestPath = Join-Path $site 'installer\manifest.json'
+$manifestText = Get-Content $manifestPath -Raw
 $manifest = $manifestText | ConvertFrom-Json
 
-$expectedParts = @(
-  @{ Name = 'bootloader.bin'; Offset = 0 },
-  @{ Name = 'partitions.bin'; Offset = 32768 },
-  @{ Name = 'boot_app0.bin'; Offset = 57344 },
-  @{ Name = 'firmware.bin'; Offset = 65536 }
-)
+if ([string]$manifest.version -ne $version) {
+  throw "manifest.json version $($manifest.version) does not match APP_VERSION $version."
+}
 
 foreach ($target in $targets) {
   $build = @($manifest.builds | Where-Object { $_.chipFamily -eq $target.ChipFamily })
   if ($build.Count -ne 1) {
     throw "manifest.json must contain exactly one $($target.ChipFamily) build."
   }
-  if ($build[0].parts.Count -ne $expectedParts.Count) {
+  if ($build[0].parts.Count -ne 1) {
     throw "Unexpected part count for $($target.ChipFamily)."
   }
-  for ($index = 0; $index -lt $expectedParts.Count; $index++) {
-    $part = $build[0].parts[$index]
-    $expected = $expectedParts[$index]
-    $expectedPath = "firmware/$($target.Environment)/$($expected.Name)"
-    if ($part.path -ne $expectedPath -or [int]$part.offset -ne $expected.Offset) {
-      throw "Unexpected $($target.ChipFamily) part: $($part.path) at $($part.offset)."
-    }
-    if (-not (Test-Path -LiteralPath (Join-Path $site $part.path))) {
-      throw "Installer file is missing: $($part.path)"
-    }
+  $part = $build[0].parts[0]
+  $expectedPath = "firmware/ChainOSCPad-$version-$($target.Slug)-merged.bin"
+  if ($part.path -ne $expectedPath -or [int]$part.offset -ne 0) {
+    throw "Unexpected $($target.ChipFamily) part: $($part.path) at $($part.offset)."
+  }
+  if (-not (Test-Path -LiteralPath (Join-Path (Join-Path $site 'installer') $part.path))) {
+    throw "Installer file is missing: $($part.path)"
   }
   Write-Host "[OK] $($target.ChipFamily) -> $($target.Environment)"
 }
