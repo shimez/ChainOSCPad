@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#351019"/><stop offset="1" stop-color="#08090f"/></linearGradient>
+    <linearGradient id="iconBg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5b1d2e"/><stop offset="1" stop-color="#090d18"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#fb7185" stop-opacity=".38"/><stop offset="1" stop-color="#fb7185" stop-opacity="0"/></radialGradient>
+    <clipPath id="cardClip"><rect x="62" y="62" width="1076" height="506" rx="34"/></clipPath>
+  </defs>
+  <rect x="-1" y="-1" width="1202" height="632" fill="url(#bg)"/><circle cx="980" cy="80" r="390" fill="url(#glow)"/>
+  <rect x="62" y="62" width="1076" height="506" rx="34" fill="#171016" fill-opacity=".86" stroke="#693342"/><rect x="62" y="62" width="1076" height="7" fill="#fb7185" clip-path="url(#cardClip)"/>
+  <g transform="translate(92 100) scale(1.5)"><rect width="64" height="64" rx="14" fill="url(#iconBg)"/><g fill="none" stroke="#fb7185" stroke-width="5.5"><rect x="9" y="22" width="27" height="17" rx="8.5" transform="rotate(-18 22.5 30.5)"/><rect x="28" y="22" width="27" height="17" rx="8.5" transform="rotate(18 41.5 30.5)"/></g></g>
+  <text x="92" y="276" fill="#fdf2f4" font-family="Segoe UI, Arial, sans-serif" font-size="86" font-weight="750" letter-spacing="-3">ChainOSCPad</text>
+  <text x="96" y="337" fill="#f8a9ba" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="650" letter-spacing="4">WI-FI OSC CONTROLLER</text>
+  <text x="96" y="416" fill="#ead9de" font-family="Segoe UI, Arial, sans-serif" font-size="31">12 keys, rotary encoder, ESP32S3 / ESP32C6</text>
+  <g transform="translate(835 310)" fill="none" stroke="#fb7185" stroke-width="5"><rect width="245" height="198" rx="30" fill="#24131a"/><g stroke-width="4"><rect x="28" y="25" width="35" height="28" rx="7"/><rect x="72" y="25" width="35" height="28" rx="7"/><rect x="116" y="25" width="35" height="28" rx="7"/><rect x="28" y="64" width="35" height="28" rx="7"/><rect x="72" y="64" width="35" height="28" rx="7"/><rect x="116" y="64" width="35" height="28" rx="7"/><rect x="28" y="103" width="35" height="28" rx="7"/><rect x="72" y="103" width="35" height="28" rx="7"/><rect x="116" y="103" width="35" height="28" rx="7"/><rect x="28" y="142" width="35" height="28" rx="7"/><rect x="72" y="142" width="35" height="28" rx="7"/><rect x="116" y="142" width="35" height="28" rx="7"/><circle cx="197" cy="50" r="25"/></g></g>
+  <text x="1105" y="538" text-anchor="end" fill="#987782" font-family="Segoe UI, Arial, sans-serif" font-size="19">shimez.github.io/ChainOSCPad</text>
+</svg>

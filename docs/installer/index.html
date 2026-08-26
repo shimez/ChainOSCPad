@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <meta name="theme-color" content="#17090d">
+  <title>ChainOSCPad Web Installer</title>
+  <meta name="description" content="ChainOSCPadをXIAO ESP32S3／ESP32C6へブラウザーからインストールします。">
+  <link rel="canonical" href="https://shimez.github.io/ChainOSCPad/installer/">
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    :root{color-scheme:dark;--bg:#0d070a;--text:#fdf2f4;--muted:#c8abb3;--line:#50303a;--accent:#ef4444;--accent2:#be123c;--status:#59d499}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 50% -10%,#5b1d2e 0,transparent 38%),var(--bg)}
+    main{width:min(760px,calc(100% - 32px));margin:0 auto;padding:56px 0 44px}.hero{text-align:center;margin-bottom:28px}h1{margin:0;font-size:clamp(30px,7vw,48px);letter-spacing:-.04em}.lead{margin:13px auto 0;color:var(--muted);font-size:17px;line-height:1.7}
+    .version{display:inline-flex;gap:8px;align-items:center;margin-top:16px;padding:7px 12px;border:1px solid #70404e;border-radius:999px;color:#f8dbe2;font-size:13px}.version:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--status);box-shadow:0 0 0 4px #59d49920}.unofficial{width:min(650px,100%);margin:18px auto 0;color:#ddc3ca;font-size:13px;line-height:1.6}
+    .card{padding:26px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,#24131a,#1a0e13);box-shadow:0 24px 65px #0008}h2{margin:0 0 10px;font-size:21px}p{color:var(--muted);line-height:1.7}.install{display:flex;justify-content:center;margin:26px 0 18px}esp-web-install-button::part(activate){min-width:260px;padding:15px 24px;border:0;border-radius:12px;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));font:700 16px inherit;cursor:pointer}
+    ol{margin:18px 0 0;padding-left:23px;color:#f2dce2;line-height:1.9}.note,.warning{margin-top:18px;padding:15px 17px;border-radius:13px;font-size:14px;line-height:1.65}.note{border:1px solid #65404b;background:#2b1820;color:#ead3d9}.warning{border-left:3px solid #fb7185;background:#2c151d;color:#f5c6d1}.english-guide{margin-top:22px;padding:18px 19px;border:1px solid #65404b;border-radius:13px;background:#211219}.english-guide h3{margin:0;color:#fff1f4;font-size:17px}.english-guide p{margin:8px 0 0;font-size:14px}.english-guide ol{margin-top:10px;font-size:14px}.english-guide .warning{margin-bottom:0}.history{margin-top:22px;padding:18px 19px;border:1px solid #65404b;border-radius:13px;background:#2b1820}.history h3{margin:0;font-size:17px}.history p{margin:10px 0 0;color:#ead3d9;font-size:14px}footer{margin-top:22px;text-align:center;color:#967783;font-size:13px}footer a{color:#f3a6b8}@media(max-width:520px){main{padding-top:34px}.card{padding:21px}esp-web-install-button::part(activate){min-width:220px;width:100%}}
+  </style>
+</head>
+<body><main>
+  <header class="hero">
+    <h1>ChainOSCPad</h1>
+    <p class="lead">XIAO ESP32S3／ESP32C6へファームウェアをブラウザーからインストールできます。</p>
+    <span class="version">Stable version <span id="firmware-version">0.6.0</span></span>
+    <p class="unofficial">ChainOSCPadは個人が開発する非公式プロジェクトです。Seeed Studioその他のハードウェアメーカーによる公式製品ではありません。</p>
+  </header>
+  <section class="card" aria-labelledby="installer-title">
+    <h2 id="installer-title">Web Installer</h2>
+    <p>XIAOをデータ通信対応USBケーブルでPCへ接続し、下のボタンからシリアルポートを選択してください。接続したS3／C6に合うファームウェアが自動的に選択されます。</p>
+    <div class="install"><esp-web-install-button manifest="../manifest.json"><button slot="activate">Install ChainOSCPad</button><span slot="unsupported">このブラウザーはWeb Serialに対応していません。デスクトップ版ChromeまたはEdgeを使用してください。</span></esp-web-install-button></div>
+    <ol><li>XIAOをデータ通信対応のUSBケーブルで接続します。</li><li>「Install ChainOSCPad」を押し、XIAOのシリアルポートを選びます。</li><li>画面の案内に従ってインストールを完了します。</li></ol>
+    <div class="note">ポートが表示されない場合は、XIAOのBOOTボタンを押しながらUSBへ接続し、ダウンロードモードを試してください。</div>
+    <div class="warning">再インストールや消去を行う前に、必要な設定をWeb UIの「設定をエクスポート（JSON）」でバックアップしてください。</div>
+    <div class="english-guide" lang="en" aria-labelledby="english-install-title">
+      <h3 id="english-install-title">Quick Installation Guide (English)</h3>
+      <p>Use desktop Google Chrome or Microsoft Edge. The correct ESP32S3 or ESP32C6 firmware is selected automatically.</p>
+      <ol><li>Connect the XIAO with a USB cable that supports data.</li><li>Select <strong>Install ChainOSCPad</strong> and choose the XIAO serial port.</li><li>Follow the on-screen instructions to complete the installation.</li></ol>
+      <div class="note">If the port is not listed, hold the XIAO <strong>BOOT</strong> button while reconnecting the USB cable.</div>
+      <div class="warning">Before reinstalling or erasing the device, back up important settings with <strong>Export Settings (JSON)</strong> in the Web UI.</div>
+    </div>
+    <div class="history"><h3>Version History</h3><p><strong>Version 0.6.0:</strong> XIAO ESP32C6へ対応し、ESP32S3／ESP32C6の自動ビルド、Web Installer、OSC送信先と入力設定の一括保存を追加しました。</p><p><strong>Version 0.5.1:</strong> 12キーとEncoderの現在位置を確認できるキー配置ガイドを追加しました。</p><p><strong>Version 0.5.0:</strong> Sequence検証と通常設定画面をChainOSCシリーズの仕様へ統一しました。</p></div>
+  </section>
+  <footer><div><a href="https://github.com/shimez/ChainOSCPad">GitHub</a> · ChainOSCPad Web Installer</div><p>ChainOSCPadの独自部分は<a href="https://github.com/shimez/ChainOSCPad/blob/main/LICENSE">MIT License</a>で提供されます。配布ファームウェアには別ライセンスの第三者コンポーネントが含まれます。詳細は<a href="https://github.com/shimez/ChainOSCPad/blob/main/THIRD_PARTY_NOTICES.md">Third-Party Notices</a>を参照してください。</p></footer>
+</main><script>fetch('../manifest.json').then(response=>response.json()).then(manifest=>{if(manifest.version&&!manifest.version.includes('__'))document.getElementById('firmware-version').textContent=manifest.version}).catch(()=>{});</script></body>
+</html>

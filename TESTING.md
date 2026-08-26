@@ -1,4 +1,32 @@
-# Version 0.5.1 実機確認
+# Version 0.6.0 実機確認
+
+## ビルド対象
+
+- [x] PlatformIOの`xiao_esp32s3`環境でビルドできる
+- [x] PlatformIOの`xiao_esp32c6`環境でビルドできる
+- [ ] GitHub ActionsでS3/C6の両ジョブが成功し、各Artifactをダウンロードできる
+- [ ] GitHub PagesのWeb InstallerがHTTPSで表示される
+- [ ] GitHub Pagesのルートに製品ポータルが表示され、Web Installerへのリンクが機能する
+- [ ] Web Installerが`/ChainOSCPad/installer/`に表示される
+- [ ] OG／Twitterカードのメタデータが製品ポータルにだけ設定されている
+- [ ] Web InstallerがChainOSCシリーズ共通レイアウトとChainOSCPadの赤系配色で表示される
+- [ ] Web Installerの赤いキー配置アイコンがブラウザータブへ表示される
+- [ ] 32px favicon、Apple Touch Icon、OG画像がGitHub Pagesから取得できる
+- [ ] Web InstallerがXIAO ESP32S3を判定して書き込みできる
+- [ ] Web InstallerがXIAO ESP32C6を判定して書き込みできる
+- [ ] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C6のmanifest振り分けと全ファイルを検証できる
+- [ ] Web Installerで書き込んだ各機種が起動し、AP Modeと既存設定画面を利用できる
+- [ ] XIAO ESP32C6へ書き込み、起動ログに製品名とバージョンが表示される
+- [ ] XIAO ESP32C6で以下のS3向け実機確認項目も同様に動作する
+
+### XIAO ESP32C6 大容量設定
+
+- [x] Key 1～12へ最大容量のプリセットを保存できる
+- [x] 12 Key保存後もLittleFSに十分な空き容量がある（使用57,344／総容量1,441,792 bytes）
+- [x] 再起動後にKey 1～12の設定がすべて復元される
+- [x] 最大容量設定の状態でもWeb UIにKey 12とEncoderまで表示される
+- [x] 最大容量設定のKey 1～12からOSCを送信できる
+- [x] 最大容量の全体設定JSONをエクスポートし、再インポートできる
 
 ## 言語
 
@@ -56,7 +84,10 @@
 - [x] Encoder Pushが`1.0`／`0.0`を送信する
 - [x] Web設定で変更したHost／Portへ送信される
 - [ ] 通常画面で不正なOSC IPアドレス／UDPポートが拒否される
-- [ ] 通常画面でOSC送信先を保存してもURLが変わらず、再起動なしで反映される
+- [ ] OSC送信先設定に個別の保存ボタンが表示されない
+- [ ] 「すべての設定を保存」でOSC送信先、Key 1～12、Encoderが一緒に保存される
+- [ ] 全体保存してもURLが変わらず、OSC送信先が再起動なしで反映される
+- [ ] OSC送信先または入力設定が不正な場合、どの設定も変更されない
 
 ## 入力設定
 

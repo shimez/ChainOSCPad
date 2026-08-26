@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+## 0.6.0
+
+- Add XIAO ESP32C6 support alongside ESP32S3, including board-specific build environments, GPIO documentation, and hardware tests
+- Add GitHub Actions firmware builds, downloadable S3/C6 artifacts, and an ESP Web Tools installer deployed through GitHub Pages
+- Add a ChainOSC-series product portal linking to the Web Installer, with red ChainOSCPad product assets and social sharing metadata
+- Save and validate the OSC target together with all Key and Encoder settings, replacing the separate OSC target save action
+
 ## 0.5.1
 
 - Add a sticky Key Layout Guide showing the 3 x 4 key matrix and Encoder position

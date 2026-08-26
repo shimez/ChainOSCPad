@@ -1,0 +1,98 @@
+name: Build firmware and Web Installer
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [xiao_esp32s3, xiao_esp32c6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install PlatformIO
+        run: python -m pip install platformio==6.1.19
+      - name: Build firmware
+        run: pio run --environment "${{ matrix.environment }}"
+      - name: Collect firmware images
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="dist/${{ matrix.environment }}"
+          build_dir=".pio/build/${{ matrix.environment }}"
+          mkdir -p "$output"
+          cp "$build_dir/bootloader.bin" "$output/"
+          cp "$build_dir/partitions.bin" "$output/"
+          cp "$build_dir/firmware.bin" "$output/"
+          boot_app0="$(find "$HOME/.platformio/packages" -path '*/tools/partitions/boot_app0.bin' -print -quit)"
+          test -n "$boot_app0"
+          cp "$boot_app0" "$output/boot_app0.bin"
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.environment }}
+          path: dist
+          if-no-files-found: error
+
+  pages:
+    name: Package Web Installer
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download firmware images
+        uses: actions/download-artifact@v4
+        with:
+          pattern: firmware-*
+          path: site/firmware
+          merge-multiple: true
+      - name: Assemble installer site
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -R docs/. site/
+          version="$(sed -n 's/.*APP_VERSION\[\].*"\([^"]*\)".*/\1/p' include/config.h)"
+          test -n "$version"
+          sed -i "s/__VERSION__/$version/g" site/manifest.json
+          find site -maxdepth 3 -type f -print
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy Web Installer
+    if: github.event_name == 'push'
+    needs: pages
+    runs-on: ubuntu-latest
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

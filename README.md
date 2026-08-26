@@ -1,13 +1,13 @@
 # ChainOSCPad
 
-XIAO ESP32S3、3列×4行キーマトリクス、ロータリーエンコーダーを使う
-Wi-Fi OSCコントローラーです。
+XIAO ESP32S3／ESP32C6に対応した、3列×4行キーマトリクスと
+ロータリーエンコーダーを搭載するWi-Fi OSCコントローラーです。
 
-## Version 0.5.1
+## Version 0.6.0
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
-- Wi-Fi／OSC送信先をESP32-S3のNVSへ保存
+- Wi-Fi／OSC送信先をESP32のNVSへ保存
 - `http://chainoscpad.local/`から設定画面へアクセス
 - 設定リセット
 - Arduino IDE／PlatformIO共通ソース
@@ -59,6 +59,8 @@ Wi-Fi接続後に`http://chainoscpad.local/`を開きます。Wi-Fi／OSC送信�
 
 全項目を検証してからLittleFSへ保存し、その場で動作へ反映します。Float／Intで
 数値として解釈できない値や、`/`で始まらないOSC Addressは拒否されます。
+OSC送信先、Key 1～12、Encoderは、画面下部の「すべての設定を保存」でまとめて
+保存されます。
 
 各デバイスカードの`…`メニューからプリセットをJSONで入出力できます。ネットワーク
 画面の「設定のバックアップと復元」では、OSC送信先、UI言語、12 Key、Encoderを
@@ -67,22 +69,22 @@ Wi-Fi接続後に`http://chainoscpad.local/`を開きます。Wi-Fi／OSC送信�
 
 ## 配線
 
-| XIAO | GPIO | 接続先 |
-|---|---:|---|
-| D0 | 1 | ROW0（SW1～SW3） |
-| D1 | 2 | ROW1（SW4～SW6） |
-| D2 | 3 | ROW2（SW7～SW9） |
-| D3 | 4 | ROW3（SW10～SW12） |
-| D4 | 5 | COL0（SW1、SW4、SW7、SW10） |
-| D5 | 6 | COL1（SW2、SW5、SW8、SW11） |
-| D6 | 43 | COL2（SW3、SW6、SW9、SW12） |
-| D7 | 44 | Encoder A |
-| D8 | 7 | Encoder B |
-| D9 | 8 | Encoder Push |
-| D10 | 9 | Spare（未使用） |
+| XIAO | ESP32S3 GPIO | ESP32C6 GPIO | 接続先 |
+|---|---:|---:|---|
+| D0 | 1 | 0 | ROW0（SW1～SW3） |
+| D1 | 2 | 1 | ROW1（SW4～SW6） |
+| D2 | 3 | 2 | ROW2（SW7～SW9） |
+| D3 | 4 | 21 | ROW3（SW10～SW12） |
+| D4 | 5 | 22 | COL0（SW1、SW4、SW7、SW10） |
+| D5 | 6 | 23 | COL1（SW2、SW5、SW8、SW11） |
+| D6 | 43 | 16 | COL2（SW3、SW6、SW9、SW12） |
+| D7 | 44 | 17 | Encoder A |
+| D8 | 7 | 19 | Encoder B |
+| D9 | 8 | 20 | Encoder Push |
+| D10 | 9 | 18 | Spare（未使用） |
 
 エンコーダーの共通端子とPushの反対側はGNDへ接続します。A、B、Pushには
-XIAO ESP32S3の内部プルアップを使用します。
+XIAO ESP32S3／ESP32C6の内部プルアップを使用します。
 
 ### マトリクスのダイオード
 
@@ -126,28 +128,71 @@ Version 0.2.0ではWi-FiとOSC送信先をブラウザーから設定するた�
    インストールします。
 2. Library Managerで`ArduinoOSC`と`ArduinoJson`をインストールします。
 3. ルートの`ChainOSCPad.ino`をArduino IDEで開きます。
-4. ボードを`XIAO_ESP32S3`または`Seeed XIAO ESP32S3`に設定します。
+4. 使用するマイコンに合わせて`XIAO_ESP32S3`／`Seeed XIAO ESP32S3`または
+   `XIAO_ESP32C6`／`Seeed Studio XIAO ESP32C6`に設定します。
 5. `USB CDC On Boot`を`Enabled`にします。
 6. XIAOのポートを選び、検証／書き込みを実行します。
 7. シリアルモニターを115200 bpsで開きます。
 
-ボード名が一覧にない場合は、Seeed Studio WikiのXIAO ESP32S3 Arduino IDE導入手順に
-従ってボードパッケージを更新してください。
+ボード名が一覧にない場合は、Seeed Studio Wikiの各XIAO Arduino IDE導入手順に
+従ってボードパッケージを更新してください。ESP32C6ではArduino ESP32 3.x系を
+使用してください。
 
 ## PlatformIO
 
 1. VS CodeとPlatformIOでこのフォルダーを開きます。
-2. XIAO ESP32S3をUSB接続します。
-3. ビルドして書き込みます。
+2. 使用するXIAOをUSB接続します。
+3. 対象環境を指定してビルド・書き込みします。対象を省略した`pio run`ではS3とC6を
+   両方ビルドします。
 
 ```powershell
 pio run
-pio run --target upload
-pio device monitor
+pio run -e xiao_esp32s3
+pio run -e xiao_esp32c6
+pio run -e xiao_esp32s3 --target upload
+pio run -e xiao_esp32c6 --target upload
+pio device monitor --baud 115200
 ```
 
+環境別のファームウェアは`.pio/build/xiao_esp32s3/`と
+`.pio/build/xiao_esp32c6/`に生成されます。将来の自動ビルドやWeb Installerでは、
+この環境名を成果物名とマニフェストの対象名に使用できます。
+
+## 自動ビルドとWeb Installer
+
+GitHub Actionsは`main`へのpush、`v*`タグ、Pull Request、手動実行で
+`xiao_esp32s3`と`xiao_esp32c6`を個別にビルドします。Actions画面から各環境の
+ファームウェア一式をArtifactとしてダウンロードできます。
+
+GitHub Pagesの製品ポータル、Web Installer、製品アイコンは`docs/`に格納しています。
+
+`main`へのpushまたは`v*`タグでは、製品ポータルと両環境を収録したESP Web Tools
+ページもGitHub Pagesへ公開します。初回のみGitHubリポジトリの`Settings` → `Pages` →
+`Build and deployment`でSourceを`GitHub Actions`に設定してください。公開先は通常、
+`https://shimez.github.io/ChainOSCPad/`です。ポータルのWeb Installerリンクから
+`https://shimez.github.io/ChainOSCPad/installer/`を開き、PC版Google Chromeまたは
+Microsoft Edgeで接続したXIAOへ書き込めます。チップに合うS3/C6ファームウェアは
+インストーラーが自動選択します。OG／Twitterカードは製品ポータル用です。
+
+### Web Installerを公開前にテストする
+
+PowerShellで次を実行すると、S3/C6をビルドしてmanifestとファームウェア構成を検証し、
+ローカルWeb Installerを`http://127.0.0.1:8765/installer/`で起動します。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\test_web_installer.ps1
+```
+
+すでに両環境をビルド済みなら`-SkipBuild`、ファイル検証だけなら`-CheckOnly`も指定できます。
+ChromeまたはEdgeでInstallerを開き、XIAO ESP32S3とESP32C6を1台ずつUSB接続して、
+それぞれ書き込みを確認してください。ESP Web ToolsはUSBから取得したチップ種別と
+manifestの`ESP32-S3`／`ESP32-C6`を照合して対象ファームウェアを選択します。
+
+S3環境は既存動作を維持するためEspressif 32 Platform 6.9.0を使用します。C6環境は
+Seeed Studio公式PlatformIO platformのWindowsで検証したリビジョンを使用します。
+
 シリアルモニターは115200 bpsです。OSC受信機とChainOSCPadは同じLANへ接続して
-ください。ESP32-S3のWi-Fiは2.4 GHz帯を使用します。
+ください。ESP32S3／ESP32C6のWi-Fiは2.4 GHz帯を使用します。
 
 ## 調整項目
 
