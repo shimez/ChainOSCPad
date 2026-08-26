@@ -4,20 +4,20 @@
 
 - [x] PlatformIOの`xiao_esp32s3`環境でビルドできる
 - [x] PlatformIOの`xiao_esp32c6`環境でビルドできる
-- [ ] GitHub ActionsでS3/C6の両ジョブが成功し、各Artifactをダウンロードできる
-- [ ] GitHub PagesのWeb InstallerがHTTPSで表示される
-- [ ] GitHub Pagesのルートに製品ポータルが表示され、Web Installerへのリンクが機能する
-- [ ] Web Installerが`/ChainOSCPad/installer/`に表示される
-- [ ] OG／Twitterカードのメタデータが製品ポータルにだけ設定されている
-- [ ] Web InstallerがChainOSCシリーズ共通レイアウトとChainOSCPadの赤系配色で表示される
-- [ ] Web Installerの赤いキー配置アイコンがブラウザータブへ表示される
-- [ ] 32px favicon、Apple Touch Icon、OG画像がGitHub Pagesから取得できる
-- [ ] Web InstallerがXIAO ESP32S3を判定して書き込みできる
-- [ ] Web InstallerがXIAO ESP32C6を判定して書き込みできる
-- [ ] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C6のmanifest振り分けと全ファイルを検証できる
-- [ ] Web Installerで書き込んだ各機種が起動し、AP Modeと既存設定画面を利用できる
-- [ ] XIAO ESP32C6へ書き込み、起動ログに製品名とバージョンが表示される
-- [ ] XIAO ESP32C6で以下のS3向け実機確認項目も同様に動作する
+- [x] GitHub ActionsでS3/C6の両ジョブが成功し、各Artifactをダウンロードできる
+- [x] GitHub PagesのWeb InstallerがHTTPSで表示される
+- [x] GitHub Pagesのルートに製品ポータルが表示され、Web Installerへのリンクが機能する
+- [x] Web Installerが`/ChainOSCPad/installer/`に表示される
+- [x] OG／Twitterカードのメタデータが製品ポータルにだけ設定されている
+- [x] Web InstallerがChainOSCシリーズ共通レイアウトとChainOSCPadの赤系配色で表示される
+- [x] Web Installerの赤いキー配置アイコンがブラウザータブへ表示される
+- [x] 32px favicon、Apple Touch Icon、OG画像がGitHub Pagesから取得できる
+- [x] Web InstallerがXIAO ESP32S3を判定して書き込みできる
+- [x] Web InstallerがXIAO ESP32C6を判定して書き込みできる
+- [x] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C6のmanifest振り分けと全ファイルを検証できる
+- [x] Web Installerで書き込んだ各機種が起動し、AP Modeと既存設定画面を利用できる
+- [x] XIAO ESP32C6へ書き込み、起動ログに製品名とバージョンが表示される
+- [x] XIAO ESP32C6で以下のS3向け実機確認項目も同様に動作する
 
 ### XIAO ESP32C6 大容量設定
 
@@ -34,9 +34,9 @@
 - [x] `English`／`日本語`を切り替えてもURLが変わらない
 - [x] 再起動後も選択した言語が保持される
 - [x] ネットワーク、入力設定、追加したOSC行、確認・エラー表示が選択言語になる
-- [ ] 通常のルート画面に言語、システム、WiFi、JSON、OSC、Key 1～12、Encoderが順番どおり表示される
-- [ ] システム欄に製品名、バージョン、IPアドレス、mDNS名が表示される
-- [ ] 横幅の広いブラウザーで通常画面の左右に適度な余白が表示される
+- [x] 通常のルート画面に言語、システム、WiFi、JSON、OSC、Key 1～12、Encoderが順番どおり表示される
+- [x] システム欄に製品名、バージョン、IPアドレス、mDNS名が表示される
+- [x] 横幅の広いブラウザーで通常画面の左右に適度な余白が表示される
 - [x] 「ネットワーク」「入力設定」のページ切り替えナビゲーションが表示されない
 
 ## JSONバックアップとプリセット
@@ -61,10 +61,10 @@
 
 - [x] `ChainOSCPad-Setup`が表示される
 - [x] パスワード`12345678`で接続できる
-- [ ] `http://192.168.4.1/`にSSIDとパスワードだけのWi-Fi設定画面が表示される
-- [ ] キャプティブポータルに言語、システム、JSON、OSC、入力設定が表示されない
-- [ ] Wi-Fi設定を保存すると再起動する
-- [ ] 保存した2.4 GHz Wi-Fiへ接続する
+- [x] `http://192.168.4.1/`にSSIDとパスワードだけのWi-Fi設定画面が表示される
+- [x] キャプティブポータルに言語、システム、JSON、OSC、入力設定が表示されない
+- [x] Wi-Fi設定を保存すると再起動する
+- [x] 保存した2.4 GHz Wi-Fiへ接続する
 - [x] シリアルへ接続IPとOSC送信先が表示される
 - [x] `http://chainoscpad.local/`で設定画面が表示される
 
@@ -72,9 +72,9 @@
 
 - [x] USB電源を抜き差ししても設定が保持される
 - [x] 保存済みWi-Fiを停止して起動すると、約15秒後に設定APが表示される
-- [ ] 通常画面の「Wi-Fi設定を削除」で再起動し、設定APが表示される
-- [ ] Wi-Fi設定を削除してもOSC送信先と入力設定が保持される
-- [ ] Wi-Fiパスワードが通常画面のHTMLへ表示されず、AP画面にも保存値が埋め込まれない
+- [x] 通常画面の「Wi-Fi設定を削除」で再起動し、設定APが表示される
+- [x] Wi-Fi設定を削除してもOSC送信先と入力設定が保持される
+- [x] Wi-Fiパスワードが通常画面のHTMLへ表示されず、AP画面にも保存値が埋め込まれない
 
 ## OSC入力
 
@@ -83,11 +83,11 @@
 - [x] Encoderが`0.00`～`0.95`を循環送信する
 - [x] Encoder Pushが`1.0`／`0.0`を送信する
 - [x] Web設定で変更したHost／Portへ送信される
-- [ ] 通常画面で不正なOSC IPアドレス／UDPポートが拒否される
-- [ ] OSC送信先設定に個別の保存ボタンが表示されない
-- [ ] 「すべての設定を保存」でOSC送信先、Key 1～12、Encoderが一緒に保存される
-- [ ] 全体保存してもURLが変わらず、OSC送信先が再起動なしで反映される
-- [ ] OSC送信先または入力設定が不正な場合、どの設定も変更されない
+- [x] 通常画面で不正なOSC IPアドレス／UDPポートが拒否される
+- [x] OSC送信先設定に個別の保存ボタンが表示されない
+- [x] 「すべての設定を保存」でOSC送信先、Key 1～12、Encoderが一緒に保存される
+- [x] 全体保存してもURLが変わらず、OSC送信先が再起動なしで反映される
+- [x] OSC送信先または入力設定が不正な場合、どの設定も変更されない
 
 ## 入力設定
 
@@ -115,22 +115,22 @@
 - [x] PressまたはReleaseを0件にして、その操作では送信されない
 - [x] 上下矢印で変更した順番どおりに複数メッセージが送信される
 - [x] KeyのSequenceがStartからStepずつ進み、Endを超えるとStartへ戻る
-- [ ] Sequence欄が左帯なしの薄い枠で囲まれ、OSCアドレスだけが1行全幅で表示される
-- [ ] SequenceのStart／End／Step／Typeが横一列のタイルとして表示され、狭い画面では折り返される
-- [ ] 通常画面でKey 1～12が横3×縦4、Encoderが独立した配置ガイドとして表示される
-- [ ] キー配置ガイド見出しの左端に「▼」があり、押すと配置図と現在位置表示の両方が折りたたまれ、もう一度押すと展開される
-- [ ] 画面内に表示されているKey／Encoderカードがガイド上で強調され、複数カード表示時は複数箇所が強調される
-- [ ] Key／Encoderカード内をクリックまたは入力欄へフォーカスすると、該当する1つだけがガイド上で強調される
-- [ ] カード操作による単独強調の後にスクロールすると、画面内に表示中のカードを強調する状態へ戻る
-- [ ] 「現在の表示位置」に画面上端へ最も近い表示中カードが表示される
-- [ ] ガイドのKey／Encoderを押すと対応する設定カードへスクロールする
-- [ ] 設定カードを縦にスクロールしても配置ガイドが画面内へ追従する
-- [ ] Key／Encoderプリセットと全体設定のインポートで、Sequenceの`Step = 0`が拒否される
-- [ ] Key／Encoderプリセットと全体設定のインポートで、`Start < End`かつ`Step < 0`が拒否される
-- [ ] Key／Encoderプリセットと全体設定のインポートで、`Start > End`かつ`Step > 0`が拒否される
-- [ ] Web UIからの全体保存でも、上記3種類の不正なSequenceが拒否される
-- [ ] 不正なSequenceのインポート／保存が拒否された後も、保存済み設定が変更されていない
-- [ ] 正しいSequence設定をインポート／保存でき、Start／End／Stepが自動変更されない
+- [x] Sequence欄が左帯なしの薄い枠で囲まれ、OSCアドレスだけが1行全幅で表示される
+- [x] SequenceのStart／End／Step／Typeが横一列のタイルとして表示され、狭い画面では折り返される
+- [x] 通常画面でKey 1～12が横3×縦4、Encoderが独立した配置ガイドとして表示される
+- [x] キー配置ガイド見出しの左端に「▼」があり、押すと配置図と現在位置表示の両方が折りたたまれ、もう一度押すと展開される
+- [x] 画面内に表示されているKey／Encoderカードがガイド上で強調され、複数カード表示時は複数箇所が強調される
+- [x] Key／Encoderカード内をクリックまたは入力欄へフォーカスすると、該当する1つだけがガイド上で強調される
+- [x] カード操作による単独強調の後にスクロールすると、画面内に表示中のカードを強調する状態へ戻る
+- [x] 「現在の表示位置」に画面上端へ最も近い表示中カードが表示される
+- [x] ガイドのKey／Encoderを押すと対応する設定カードへスクロールする
+- [x] 設定カードを縦にスクロールしても配置ガイドが画面内へ追従する
+- [x] Key／Encoderプリセットと全体設定のインポートで、Sequenceの`Step = 0`が拒否される
+- [x] Key／Encoderプリセットと全体設定のインポートで、`Start < End`かつ`Step < 0`が拒否される
+- [x] Key／Encoderプリセットと全体設定のインポートで、`Start > End`かつ`Step > 0`が拒否される
+- [x] Web UIからの全体保存でも、上記3種類の不正なSequenceが拒否される
+- [x] 不正なSequenceのインポート／保存が拒否された後も、保存済み設定が変更されていない
+- [x] 正しいSequence設定をインポート／保存でき、Start／End／Stepが自動変更されない
 - [x] Wi-Fi切断中にKeyのSequenceを押してもOSCが送信されず、Sequence値も進まない
 - [x] Wi-Fi再接続後にKeyのSequenceを押すと、切断前の次の値から送信を再開する
 - [x] Wi-Fi切断中にEncoder ClickのSequenceを押してもOSCが送信されず、Sequence値も進まない

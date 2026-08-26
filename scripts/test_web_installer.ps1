@@ -79,7 +79,8 @@ if (-not $versionMatch.Success) {
 $version = $versionMatch.Groups[1].Value
 $manifestPath = Join-Path $site 'manifest.json'
 $manifestText = (Get-Content $manifestPath -Raw).Replace('__VERSION__', $version)
-Set-Content -LiteralPath $manifestPath -Value $manifestText -Encoding utf8NoBOM
+$utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+[IO.File]::WriteAllText($manifestPath, $manifestText, $utf8WithoutBom)
 $manifest = $manifestText | ConvertFrom-Json
 
 $expectedParts = @(
