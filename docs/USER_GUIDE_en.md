@@ -20,7 +20,7 @@ Power the device, connect to `ChainOSCPad-Setup` with password `12345678`, then 
 
 From the same network, open `http://chainoscpad.local/`. If mDNS is unavailable, use the IP address shown in the serial log.
 
-The page contains Language, System, Wi-Fi, Backup and Restore, OSC Destination, Key 1–12 and Encoder sections. Use the floating save button to save all changes together.
+The page contains Language, System, Wi-Fi, Backup and Restore, OSC Destination, Key 1–12 and Encoder sections. The System card shows the product, XIAO model, firmware version, IP address and mDNS name. Use the floating save button to save all changes together.
 
 ## 3. OSC destination
 

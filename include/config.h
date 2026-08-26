@@ -17,7 +17,19 @@ inline constexpr uint16_t OSC_TARGET_PORT = 9000;
 #endif
 
 inline constexpr char APP_NAME[] = "ChainOSCPad";
-inline constexpr char APP_VERSION[] = "0.6.0";
+inline constexpr char APP_VERSION[] = "0.6.1";
+
+#if defined(CHAINOSCPAD_BOARD_XIAO_ESP32S3)
+inline constexpr char HARDWARE_NAME[] = "XIAO ESP32S3";
+#elif defined(CHAINOSCPAD_BOARD_XIAO_ESP32C6)
+inline constexpr char HARDWARE_NAME[] = "XIAO ESP32C6";
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+inline constexpr char HARDWARE_NAME[] = "XIAO ESP32S3";
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+inline constexpr char HARDWARE_NAME[] = "XIAO ESP32C6";
+#else
+inline constexpr char HARDWARE_NAME[] = "Unknown ESP32";
+#endif
 inline constexpr char WIFI_AP_SSID[] = "ChainOSCPad-Setup";
 inline constexpr char WIFI_AP_PASSWORD[] = "12345678";
 inline constexpr char WIFI_MDNS_HOST[] = "chainoscpad";

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 0.6.1
+
+- Show the XIAO ESP32S3 or XIAO ESP32C6 hardware name in the Web UI System card
 - Add Japanese and English Quick Start and User Guide pages matching the ChainOSCmini portal structure
 - Align release automation with ChainOSCmini by validating tag and manifest versions, creating merged S3/C6 firmware and SHA-256 files, and creating a draft GitHub Release
 - Deploy Web Installer firmware only from a matching published GitHub Release
