@@ -75,19 +75,19 @@ OSC送信先、Key 1～12、Encoderは、画面下部の「すべての設定を
 
 ## 配線
 
-| XIAO | ESP32S3 GPIO | ESP32C6 GPIO | 接続先 |
-|---|---:|---:|---|
-| D0 | 1 | 0 | ROW0（SW1～SW3） |
-| D1 | 2 | 1 | ROW1（SW4～SW6） |
-| D2 | 3 | 2 | ROW2（SW7～SW9） |
-| D3 | 4 | 21 | ROW3（SW10～SW12） |
-| D4 | 5 | 22 | COL0（SW1、SW4、SW7、SW10） |
-| D5 | 6 | 23 | COL1（SW2、SW5、SW8、SW11） |
-| D6 | 43 | 16 | COL2（SW3、SW6、SW9、SW12） |
-| D7 | 44 | 17 | Encoder A |
-| D8 | 7 | 19 | Encoder B |
-| D9 | 8 | 20 | Encoder Push |
-| D10 | 9 | 18 | Spare（未使用） |
+| XIAO | ESP32S3 GPIO | ESP32C6 GPIO | ESP32C3 GPIO | ESP32C5 GPIO | 接続先                      |
+| ---- | -----------: | -----------: | -----------: | -----------: | --------------------------- |
+| D0   |            1 |            0 |            2 |            1 | ROW0（SW1～SW3）            |
+| D1   |            2 |            1 |            3 |            0 | ROW1（SW4～SW6）            |
+| D2   |            3 |            2 |            4 |           25 | ROW2（SW7～SW9）            |
+| D3   |            4 |           21 |            5 |            7 | ROW3（SW10～SW12）          |
+| D4   |            5 |           22 |            6 |           23 | COL0（SW1、SW4、SW7、SW10） |
+| D5   |            6 |           23 |            7 |           24 | COL1（SW2、SW5、SW8、SW11） |
+| D6   |           43 |           16 |           21 |           11 | COL2（SW3、SW6、SW9、SW12） |
+| D7   |           44 |           17 |           20 |           12 | Encoder A                   |
+| D8   |            7 |           19 |            8 |            8 | Encoder B                   |
+| D9   |            8 |           20 |            9 |            9 | Encoder Push                |
+| D10  |            9 |           18 |           10 |           10 | Spare（未使用）             |
 
 エンコーダーの共通端子とPushの反対側はGNDへ接続します。A、B、Pushには
 各対応XIAOの内部プルアップを使用します。
@@ -104,11 +104,11 @@ ROWを順番にLOWへ駆動してCOLをプルアップ入力として読みま�
 
 ## OSC初期設定
 
-| 入力 | OSC Address | 型・値 |
-|---|---|---|
-| Key 1～12 | `/chainoscpad/key/1` ～ `/chainoscpad/key/12` | Float: Press `1.0` / Release `0.0` |
-| Encoder回転 | `/avatar/parameters/Encoder` | Float: `0.0`～`0.95`、20段階で循環 |
-| Encoder Push | `/avatar/parameters/EncoderClick` | Float: Press `1.0` / Release `0.0` |
+| 入力         | OSC Address                                   | 型・値                             |
+| ------------ | --------------------------------------------- | ---------------------------------- |
+| Key 1～12    | `/chainoscpad/key/1` ～ `/chainoscpad/key/12` | Float: Press `1.0` / Release `0.0` |
+| Encoder回転  | `/avatar/parameters/Encoder`                  | Float: `0.0`～`0.95`、20段階で循環 |
+| Encoder Push | `/avatar/parameters/EncoderClick`             | Float: Press `1.0` / Release `0.0` |
 
 エンコーダーはChainOSCの既定値と同じく、Absolute入力範囲`0～20`を出力範囲
 `0～1`へマッピングし、20で0へ戻します。したがって整数ステップで実際に送信される値は
@@ -120,10 +120,10 @@ Version 0.2.0ではWi-FiとOSC送信先をブラウザーから設定するた�
 `include/secrets.h`を作成する必要はありません。旧Version 0.1.0用の設定例は、
 参照用として残しています。
 
-   - `WIFI_SSID`
-   - `WIFI_PASSWORD`
-   - `OSC_TARGET_HOST`
-   - 必要なら`OSC_TARGET_PORT`
+- `WIFI_SSID`
+- `WIFI_PASSWORD`
+- `OSC_TARGET_HOST`
+- 必要なら`OSC_TARGET_PORT`
 
 `secrets.h`は引き続き`.gitignore`の対象です。Wi-FiパスワードをGitHubへpushしないで
 ください。
