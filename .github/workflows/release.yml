@@ -40,7 +40,7 @@ jobs:
             slug: XIAO-ESP32C5
             chip: esp32c5
             flash_size: 8MB
-            flash_mode: qio
+            flash_mode: dio
             boot_offset: "0x2000"
           - environment: xiao_esp32c6
             label: XIAO ESP32C6
