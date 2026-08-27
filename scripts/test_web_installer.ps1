@@ -37,10 +37,10 @@ New-Item -ItemType Directory -Path $site | Out-Null
 Copy-Item -Path (Join-Path $repo 'docs\*') -Destination $site -Recurse -Force
 
 $targets = @(
-  @{ Environment = 'xiao_esp32s3'; ChipFamily = 'ESP32-S3'; Slug = 'XIAO-ESP32S3'; Chip = 'esp32s3'; FlashSize = '8MB' },
-  @{ Environment = 'xiao_esp32c3'; ChipFamily = 'ESP32-C3'; Slug = 'XIAO-ESP32C3'; Chip = 'esp32c3'; FlashSize = '4MB' },
-  @{ Environment = 'xiao_esp32c5'; ChipFamily = 'ESP32-C5'; Slug = 'XIAO-ESP32C5'; Chip = 'esp32c5'; FlashSize = '8MB' },
-  @{ Environment = 'xiao_esp32c6'; ChipFamily = 'ESP32-C6'; Slug = 'XIAO-ESP32C6'; Chip = 'esp32c6'; FlashSize = '4MB' }
+  @{ Environment = 'xiao_esp32s3'; ChipFamily = 'ESP32-S3'; Slug = 'XIAO-ESP32S3'; Chip = 'esp32s3'; FlashSize = '8MB'; FlashMode = 'dio'; BootOffset = 0x0 },
+  @{ Environment = 'xiao_esp32c3'; ChipFamily = 'ESP32-C3'; Slug = 'XIAO-ESP32C3'; Chip = 'esp32c3'; FlashSize = '4MB'; FlashMode = 'dio'; BootOffset = 0x0 },
+  @{ Environment = 'xiao_esp32c5'; ChipFamily = 'ESP32-C5'; Slug = 'XIAO-ESP32C5'; Chip = 'esp32c5'; FlashSize = '8MB'; FlashMode = 'qio'; BootOffset = 0x2000 },
+  @{ Environment = 'xiao_esp32c6'; ChipFamily = 'ESP32-C6'; Slug = 'XIAO-ESP32C6'; Chip = 'esp32c6'; FlashSize = '4MB'; FlashMode = 'dio'; BootOffset = 0x0 }
 )
 
 $config = Get-Content (Join-Path $repo 'include\config.h') -Raw
@@ -86,14 +86,19 @@ foreach ($target in $targets) {
   $firmwareName = "ChainOSCPad-$version-$($target.Slug)-merged.bin"
   $mergedFirmware = Join-Path $firmwareDirectory $firmwareName
   & $python $esptool.FullName --chip $target.Chip merge_bin -o $mergedFirmware `
-    --flash_mode dio --flash_freq 80m --flash_size $target.FlashSize `
-    0x0 (Join-Path $build 'bootloader.bin') `
+    --flash_mode $target.FlashMode --flash_freq 80m --flash_size $target.FlashSize `
+    $target.BootOffset (Join-Path $build 'bootloader.bin') `
     0x8000 (Join-Path $build 'partitions.bin') `
     0xe000 $bootApp.FullName `
     0x10000 (Join-Path $build 'firmware.bin')
   if ($LASTEXITCODE -ne 0) {
     throw "Failed to create merged firmware: $environment"
   }
+  $firmwareBytes = [IO.File]::ReadAllBytes($mergedFirmware)
+  if ($firmwareBytes.Length -le $target.BootOffset -or $firmwareBytes[$target.BootOffset] -ne 0xE9) {
+    throw ('Invalid bootloader header for {0} at 0x{1:X}' -f $environment, $target.BootOffset)
+  }
+  Write-Host ('[OK] Bootloader header {0} at 0x{1:X}' -f $environment, $target.BootOffset)
 }
 
 $manifestPath = Join-Path $site 'installer\manifest.json'

@@ -17,6 +17,7 @@
 - [x] Web InstallerがXIAO ESP32S3を判定して書き込みできる
 - [ ] Web InstallerがXIAO ESP32C3を判定して書き込みできる
 - [ ] Web InstallerがXIAO ESP32C5を判定して書き込みできる
+- [ ] C5用merged.binの`0x2000`にESPイメージヘッダー`0xE9`があり、Web Installer書き込み後に起動する
 - [x] Web InstallerがXIAO ESP32C6を判定して書き込みできる
 - [ ] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C3/C5/C6のmanifest振り分けと全ファイルを検証できる
 - [x] Web Installerで書き込んだ各機種が起動し、AP Modeと既存設定画面を利用できる

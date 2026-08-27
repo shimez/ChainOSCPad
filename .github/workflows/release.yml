@@ -26,21 +26,29 @@ jobs:
             slug: XIAO-ESP32S3
             chip: esp32s3
             flash_size: 8MB
+            flash_mode: dio
+            boot_offset: "0x0"
           - environment: xiao_esp32c3
             label: XIAO ESP32C3
             slug: XIAO-ESP32C3
             chip: esp32c3
             flash_size: 4MB
+            flash_mode: dio
+            boot_offset: "0x0"
           - environment: xiao_esp32c5
             label: XIAO ESP32C5
             slug: XIAO-ESP32C5
             chip: esp32c5
             flash_size: 8MB
+            flash_mode: qio
+            boot_offset: "0x2000"
           - environment: xiao_esp32c6
             label: XIAO ESP32C6
             slug: XIAO-ESP32C6
             chip: esp32c6
             flash_size: 4MB
+            flash_mode: dio
+            boot_offset: "0x0"
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -83,13 +91,28 @@ jobs:
           python "$esptool" \
             --chip "${{ matrix.chip }}" merge_bin \
             -o "dist/$firmware" \
-            --flash_mode dio \
+            --flash_mode "${{ matrix.flash_mode }}" \
             --flash_freq 80m \
             --flash_size "${{ matrix.flash_size }}" \
-            0x0 ".pio/build/${{ matrix.environment }}/bootloader.bin" \
+            "${{ matrix.boot_offset }}" ".pio/build/${{ matrix.environment }}/bootloader.bin" \
             0x8000 ".pio/build/${{ matrix.environment }}/partitions.bin" \
             0xe000 "$boot_app" \
             0x10000 ".pio/build/${{ matrix.environment }}/firmware.bin"
+          python - "$firmware" "${{ matrix.boot_offset }}" <<'PY'
+          import sys
+          from pathlib import Path
+
+          firmware = Path("dist") / sys.argv[1]
+          boot_offset = int(sys.argv[2], 0)
+          with firmware.open("rb") as stream:
+              stream.seek(boot_offset)
+              header = stream.read(1)
+          if header != b"\xe9":
+              raise SystemExit(
+                  f"Invalid bootloader header at {boot_offset:#x}: {header.hex() or 'EOF'}"
+              )
+          print(f"Validated bootloader header at {boot_offset:#x}")
+          PY
           sha256sum "dist/$firmware" > "dist/ChainOSCPad-${VERSION}-${{ matrix.slug }}-SHA256.txt"
 
       - name: Upload workflow artifact
