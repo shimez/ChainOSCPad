@@ -8,7 +8,7 @@
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <meta name="theme-color" content="#17090d">
   <title>ChainOSCPad Web Installer</title>
-  <meta name="description" content="ChainOSCPadをXIAO ESP32S3／ESP32C6へブラウザーからインストールします。">
+  <meta name="description" content="ChainOSCPadをXIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6へブラウザーからインストールします。">
   <link rel="canonical" href="https://shimez.github.io/ChainOSCPad/installer/">
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
   <style>
@@ -23,25 +23,25 @@
 <body><main>
   <header class="hero">
     <h1>ChainOSCPad</h1>
-    <p class="lead">XIAO ESP32S3／ESP32C6へファームウェアをブラウザーからインストールできます。</p>
-    <span class="version">Stable version 0.6.1</span>
+    <p class="lead">XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6へファームウェアをブラウザーからインストールできます。</p>
+    <span class="version">Stable version 0.7.0</span>
     <p class="unofficial">ChainOSCPadは個人が開発する非公式プロジェクトです。Seeed Studioその他のハードウェアメーカーによる公式製品ではありません。</p>
   </header>
   <section class="card" aria-labelledby="installer-title">
     <h2 id="installer-title">Web Installer</h2>
-    <p>XIAOをデータ通信対応USBケーブルでPCへ接続し、下のボタンからシリアルポートを選択してください。接続したS3／C6に合うファームウェアが自動的に選択されます。</p>
+    <p>XIAOをデータ通信対応USBケーブルでPCへ接続し、下のボタンからシリアルポートを選択してください。接続したS3／C3／C5／C6に合うファームウェアが自動的に選択されます。</p>
     <div class="install"><esp-web-install-button manifest="manifest.json"><button slot="activate">Install ChainOSCPad</button><span slot="unsupported">このブラウザーはWeb Serialに対応していません。デスクトップ版ChromeまたはEdgeを使用してください。</span></esp-web-install-button></div>
     <ol><li>XIAOをデータ通信対応のUSBケーブルで接続します。</li><li>「Install ChainOSCPad」を押し、XIAOのシリアルポートを選びます。</li><li>画面の案内に従ってインストールを完了します。</li></ol>
     <div class="note">ポートが表示されない場合は、XIAOのBOOTボタンを押しながらUSBへ接続し、ダウンロードモードを試してください。</div>
     <div class="warning">再インストールや消去を行う前に、必要な設定をWeb UIの「設定をエクスポート（JSON）」でバックアップしてください。</div>
     <div class="english-guide" lang="en" aria-labelledby="english-install-title">
       <h3 id="english-install-title">Quick Installation Guide (English)</h3>
-      <p>Use desktop Google Chrome or Microsoft Edge. The correct ESP32S3 or ESP32C6 firmware is selected automatically.</p>
+      <p>Use desktop Google Chrome or Microsoft Edge. The correct ESP32S3, ESP32C3, ESP32C5 or ESP32C6 firmware is selected automatically.</p>
       <ol><li>Connect the XIAO with a USB cable that supports data.</li><li>Select <strong>Install ChainOSCPad</strong> and choose the XIAO serial port.</li><li>Follow the on-screen instructions to complete the installation.</li></ol>
       <div class="note">If the port is not listed, hold the XIAO <strong>BOOT</strong> button while reconnecting the USB cable.</div>
       <div class="warning">Before reinstalling or erasing the device, back up important settings with <strong>Export Settings (JSON)</strong> in the Web UI.</div>
     </div>
-    <div class="history"><h3>Version History</h3><p><strong>Version 0.6.1:</strong> システム欄へのXIAOモデル表示、日英ドキュメント、GitHub Release自動作成を追加しました。</p><p><strong>Version 0.6.0:</strong> XIAO ESP32C6へ対応し、ESP32S3／ESP32C6の自動ビルド、Web Installer、OSC送信先と入力設定の一括保存を追加しました。</p><p><strong>Version 0.5.1:</strong> 12キーとEncoderの現在位置を確認できるキー配置ガイドを追加しました。</p></div>
+    <div class="history"><h3>Version History</h3><p><strong>Version 0.7.0:</strong> XIAO ESP32C3／ESP32C5のWeb Installer対応と、ESP32C5の5 GHz Wi-Fi・入力走査対応を追加しました。</p><p><strong>Version 0.6.1:</strong> システム欄へのXIAOモデル表示、日英ドキュメント、GitHub Release自動作成を追加しました。</p><p><strong>Version 0.6.0:</strong> XIAO ESP32C6へ対応し、ESP32S3／ESP32C6の自動ビルド、Web Installer、OSC送信先と入力設定の一括保存を追加しました。</p></div>
   </section>
   <footer><div><a href="https://github.com/shimez/ChainOSCPad">GitHub</a> · ChainOSCPad Web Installer</div><p>ChainOSCPadの独自部分は<a href="https://github.com/shimez/ChainOSCPad/blob/main/LICENSE">MIT License</a>で提供されます。配布ファームウェアには別ライセンスの第三者コンポーネントが含まれます。詳細は<a href="https://github.com/shimez/ChainOSCPad/blob/main/THIRD_PARTY_NOTICES.md">Third-Party Notices</a>を参照してください。</p></footer>
 </main></body>

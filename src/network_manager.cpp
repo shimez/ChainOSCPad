@@ -102,6 +102,19 @@ bool validImportHeader(JsonObjectConst root,const char* format,size_t maxDevices
   return true;
 }
 
+String presetValidationResponse(const String& error){
+  if(error=="E_OSC_VALUE_TOO_LONG")return tr(
+    "Invalid preset: E_OSC_VALUE_TOO_LONG: OSC Value is too long. Keep it within 128 bytes in UTF-8.",
+    "プリセットが正しくありません: E_OSC_VALUE_TOO_LONG: OSC Valueが長すぎます。UTF-8で128バイト以内にしてください。");
+  if(error=="E_SEQUENCE_STEP_ZERO")return tr(
+    "Invalid preset: E_SEQUENCE_STEP_ZERO: Sequence Step must not be zero. Specify a non-zero value that moves from Start toward End.",
+    "プリセットが正しくありません: E_SEQUENCE_STEP_ZERO: SequenceのStepには0を指定できません。StartからEndへ進む0以外の値を指定してください。");
+  if(error=="E_SEQUENCE_DIRECTION_INVALID")return tr(
+    "Invalid preset: E_SEQUENCE_DIRECTION_INVALID: Sequence direction is invalid. Use a positive Step when Start is below End and a negative Step when Start is above End.",
+    "プリセットが正しくありません: E_SEQUENCE_DIRECTION_INVALID: Sequenceの進行方向が正しくありません。StartがEndより小さい場合は正のStep、大きい場合は負のStepを指定してください。");
+  return isJapanese()?String("プリセットが正しくありません。"):String("Invalid preset: ")+error;
+}
+
 void importPreset(){
   const int index=server.hasArg("index")?server.arg("index").toInt():-1;String body=server.arg("plain");
   if(index<0||index>KEY_COUNT){server.send(404,"text/plain; charset=utf-8",tr("The selected device was not found.","選択したデバイスが見つかりません。"));return;}
@@ -112,8 +125,8 @@ void importPreset(){
   JsonObjectConst root=document.as<JsonObjectConst>();const String format=root["format"].is<const char*>()?String(root["format"].as<const char*>()):String();
   if((format!=CHAINOSC_PRESET_FORMAT&&format!=CHAINOSC_LEGACY_PRESET_FORMAT)||(root["schemaVersion"]|-1)!=INPUT_JSON_SCHEMA_VERSION){server.send(400,"text/plain; charset=utf-8",tr("This is not a supported ChainOSC device preset.","対応するChainOSCデバイスプリセットではありません。"));return;}
   String error;bool saved=false;
-  if(index<KEY_COUNT){KeyInputSetting candidate=inputKeySetting(index);if(!inputKeyFromJson(root,candidate,false,index,error)){server.send(400,"text/plain; charset=utf-8",isJapanese()?String("プリセットが正しくありません。"):String("Invalid preset: ")+error);return;}saved=inputSettingsSaveKey(index,candidate);}
-  else{EncoderInputSetting candidate=inputEncoderSetting();if(!inputEncoderFromJson(root,candidate,false,error)){server.send(400,"text/plain; charset=utf-8",isJapanese()?String("プリセットが正しくありません。"):String("Invalid preset: ")+error);return;}saved=inputSettingsSaveEncoder(candidate);}
+  if(index<KEY_COUNT){KeyInputSetting candidate=inputKeySetting(index);if(!inputKeyFromJson(root,candidate,false,index,error)){server.send(400,"text/plain; charset=utf-8",presetValidationResponse(error));return;}saved=inputSettingsSaveKey(index,candidate);}
+  else{EncoderInputSetting candidate=inputEncoderSetting();if(!inputEncoderFromJson(root,candidate,false,error)){server.send(400,"text/plain; charset=utf-8",presetValidationResponse(error));return;}saved=inputSettingsSaveEncoder(candidate);}
   if(!saved){server.send(507,"text/plain; charset=utf-8",tr("The preset could not be written to storage.","プリセットをストレージへ書き込めませんでした。"));return;}
   server.send(200,"text/plain; charset=utf-8",index<KEY_COUNT?tr("Key preset imported.","Keyプリセットをインポートしました。"):tr("Encoder preset imported.","Encoderプリセットをインポートしました。"));
 }
@@ -139,7 +152,15 @@ String systemCard(){const String ip=WiFi.localIP().toString();return String("<se
 String wifiStatusCard(){return String("<section class='card overview-card'><h2>WiFi</h2><p class=meta>IP: <code>")+WiFi.localIP().toString()+"</code></p><form id=forget-wifi-form method=post action=/forget-wifi><button class=del type=submit>"+tr("Delete WiFi Settings","Wi-Fi設定を削除")+"</button></form></section>";}
 String settingsBackupCard(){return String("<section class='card settings-tools'><h2>")+tr("Settings Backup & Restore","設定のバックアップと復元")+"</h2><p>"+tr("Back up or restore all ChainOSCPad settings as versioned JSON. WiFi credentials are not included.","ChainOSCPadの全設定をバージョン付きJSONでバックアップ・復元します。Wi-Fi認証情報は含まれません。")+"</p><div class=tool-row><a href='/export_settings'>"+tr("Export Settings (JSON)","設定をエクスポート（JSON）")+"</a><button type=button onclick=chooseSettingsFile()>"+tr("Import Settings (JSON)","設定をインポート（JSON）")+"</button></div><input id=settings-import-file type=file accept='application/json,.json' hidden onchange='importSettings(this)'><p id=settings-import-status class=import-status></p></section>";}
 String oscSettingsCard(){return String("<section class='card overview-card'><h2>")+tr("OSC Target","OSC送信先の設定")+"</h2><div class=osc-grid><label>"+tr("IP Address","IPアドレス")+"<input form=input-form name=osc_host maxlength=253 required value='"+esc(oscHost)+"'></label><label>"+tr("UDP Port","UDPポート")+"<input form=input-form name=osc_port type=number min=1 max=65535 required value='"+String(oscPort)+"'></label></div></section>";}
-String provisioningPage(const String& message="",bool error=false){String h=head("ChainOSCPad Wi-Fi Setup");h+=String("<style>body{padding:24px clamp(14px,4vw,56px)}main{max-width:720px}.card{border-left:0}.setup-actions{margin-top:18px}.setup-actions button{width:100%}</style><header><h1>ChainOSCPad</h1><p>")+tr("Wi-Fi Setup","Wi-Fi設定")+"</p></header><form class=card method=post action=/save-wifi><h2>"+tr("Connect to Wi-Fi","Wi-Fiへ接続")+"</h2><p>"+tr("Enter a 2.4 GHz Wi-Fi network.","2.4 GHz帯のWi-Fiを入力してください。")+"</p>"+(message.isEmpty()?"":String("<p class='")+(error?"err":"ok")+"'>"+esc(message)+"</p>")+"<label>SSID<input name=ssid maxlength=32 required value='"+esc(ssid)+"'></label><label>"+tr("Password","パスワード")+"<input name=password type=password maxlength=64></label><div class=setup-actions><button class=save type=submit>"+tr("Save and Restart","保存して再起動")+"</button></div></form></main></body></html>";return h;}
+String provisioningPage(const String& message="",bool error=false){
+#if defined(CHAINOSCPAD_BOARD_XIAO_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C5)
+  const char* bandEn="Enter a 2.4 GHz or 5 GHz Wi-Fi network.";
+  const char* bandJa="2.4 GHz帯または5 GHz帯のWi-Fiを入力してください。";
+#else
+  const char* bandEn="Enter a 2.4 GHz Wi-Fi network.";
+  const char* bandJa="2.4 GHz帯のWi-Fiを入力してください。";
+#endif
+  String h=head("ChainOSCPad Wi-Fi Setup");h+=String("<style>body{padding:24px clamp(14px,4vw,56px)}main{max-width:720px}.card{border-left:0}.setup-actions{margin-top:18px}.setup-actions button{width:100%}</style><header><h1>ChainOSCPad</h1><p>")+tr("Wi-Fi Setup","Wi-Fi設定")+"</p></header><form class=card method=post action=/save-wifi><h2>"+tr("Connect to Wi-Fi","Wi-Fiへ接続")+"</h2><p>"+tr(bandEn,bandJa)+"</p>"+(message.isEmpty()?"":String("<p class='")+(error?"err":"ok")+"'>"+esc(message)+"</p>")+"<label>SSID<input name=ssid maxlength=32 required value='"+esc(ssid)+"'></label><label>"+tr("Password","パスワード")+"<input name=password type=password maxlength=64></label><div class=setup-actions><button class=save type=submit>"+tr("Save and Restart","保存して再起動")+"</button></div></form></main></body></html>";return h;}
 void sendProvisioningPage(const String& message="",bool error=false,int status=200){server.sendHeader("Cache-Control","no-store");server.send(status,"text/html; charset=utf-8",provisioningPage(message,error));}
 String networkActionsScript(){return F(R"WEB(<style>.device-menu a,.device-menu button{font-family:inherit;font-weight:400;line-height:1.4}.device-menu .reset-device{color:#e11d48;background:#fff1f2;border:1px solid #fecdd3}.device-menu .reset-device:hover{color:#be123c;background:#ffe4e6}</style><script>
 function importSettings(input){return importJson(input,'/import_settings',65536,tx('Import all settings in this file? Matching device settings will be overwritten.','このファイルの全設定をインポートしますか？同じデバイスの設定は上書きされます。'),'settings-import-status')}
@@ -172,7 +193,15 @@ server.on("/inputs/save-all",HTTP_POST,[]{Serial.println("[Web] Save all setting
 server.on("/save-wifi",HTTP_POST,[]{String s=server.arg("ssid"),pw=server.arg("password");s.trim();if(s.isEmpty()||s.length()>32||pw.length()>64||!saveWifi(s,pw)){sendProvisioningPage(tr("Check the entered Wi-Fi settings.","Wi-Fiの入力内容を確認してください。"),true,400);return;}sendProvisioningPage(tr("Wi-Fi settings saved. Restarting.","Wi-Fi設定を保存しました。再起動します。"));scheduleRestart();});
 server.on("/forget-wifi",HTTP_POST,[]{bool ok=false;Preferences p;if(p.begin(PREFS_NAMESPACE,false)){p.remove("ssid");p.remove("password");p.end();ok=true;}if(!ok){const String message=tr("Could not delete WiFi settings.","Wi-Fi設定を削除できませんでした。");if(server.hasArg("ajax"))server.send(500,"text/plain; charset=utf-8",message);else sendInputsPage(message,true,500);return;}ssid="";password="";const String message=tr("WiFi settings deleted. Restarting in setup mode.","Wi-Fi設定を削除しました。設定モードで再起動します。");if(server.hasArg("ajax"))server.send(200,"text/plain; charset=utf-8",message);else sendInputsPage(message);scheduleRestart();});
 server.on("/reset",HTTP_POST,[]{Preferences p;bool ok=false;if(p.begin(PREFS_NAMESPACE,false)){ok=p.clear();p.end();}ok=inputSettingsReset()&&ok;String message=ok?tr("Settings deleted. Restarting.","設定を削除しました。再起動します。"):tr("Could not delete settings.","削除できませんでした。");if(server.hasArg("ajax"))server.send(ok?200:500,"text/plain; charset=utf-8",message);else sendInputsPage(message,!ok,ok?200:500);if(ok)scheduleRestart();});
-server.onNotFound([](){if(apMode){server.sendHeader("Location","http://192.168.4.1/",true);server.send(302,"text/plain","");}else server.send(404,"text/plain","Not found");});server.begin();}
+server.onNotFound([](){if(apMode){server.sendHeader("Location","http://192.168.4.1/",true);server.send(302,"text/plain","");}else server.send(404,"text/plain","Not found");});server.begin();
+#if defined(CHAINOSCPAD_BOARD_XIAO_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C5)
+// Arduino-ESP32 3.3.7 WebServer::handleClient() calls delay(1) whenever no
+// HTTP client is waiting. On the current C5 runtime that produces an
+// approximately 50 ms pause and loses rotary encoder quadrature edges.
+server.enableDelay(false);
+Serial.println("[Web] idle delay disabled for ESP32C5");
+#endif
+}
 }
 
 void networkSetup(){load();if(!connectSta())startAp();routes();Serial.printf("[OSC] target=%s:%u\n",oscHost.c_str(),oscPort);}

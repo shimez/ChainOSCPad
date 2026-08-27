@@ -8,7 +8,7 @@ permalink: /user-guide/
 
 [English version](../en/user-guide/)
 
-ChainOSCPadは12個のKeyと、回転・クリック対応のEncoderからOSCを送信するデバイスです。XIAO ESP32S3とXIAO ESP32C6に対応します。
+ChainOSCPadは12個のKeyと、回転・クリック対応のEncoderからOSCを送信するデバイスです。XIAO ESP32S3、ESP32C3、ESP32C5、ESP32C6に対応します。
 
 > ChainOSCPadは個人が開発する非公式プロジェクトであり、Seeed Studioその他のハードウェアメーカーによる公式製品ではありません。
 
@@ -18,7 +18,8 @@ ChainOSCPadは12個のKeyと、回転・クリック対応のEncoderからOSCを
 2. SSID`ChainOSCPad-Setup`へ接続します。
 3. パスワード`12345678`を入力します。
 4. キャプティブポータルが開かない場合は`http://192.168.4.1/`を開きます。
-5. 2.4 GHz帯Wi-FiのSSIDとパスワードを保存します。
+5. Wi-FiのSSIDとパスワードを保存します。ESP32C5は2.4 GHz／5 GHz、
+   ESP32S3／C3／C6は2.4 GHzに対応します。
 
 キャプティブポータルではWi-Fi設定だけを行います。
 

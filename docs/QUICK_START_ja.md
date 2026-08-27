@@ -15,7 +15,7 @@ permalink: /quick-start/
 - 組み立て済みのChainOSCPad
 - XIAO ESP32S3またはXIAO ESP32C6
 - データ通信対応USB Type-Cケーブル
-- 2.4 GHz帯Wi-Fi
+- 対応するWi-Fi（ESP32C5は2.4 GHz／5 GHz、ESP32S3／C3／C6は2.4 GHz）
 - デスクトップ版ChromeまたはEdge
 - OSCを受信するPCまたはアプリケーション
 
@@ -33,7 +33,8 @@ permalink: /quick-start/
 1. SSID `ChainOSCPad-Setup`へ接続します。
 2. パスワード`12345678`を入力します。
 3. キャプティブポータルが開かない場合は`http://192.168.4.1/`を開きます。
-4. 使用する2.4 GHz Wi-Fiを選択し、パスワードを保存します。
+4. 使用するWi-Fiを選択し、パスワードを保存します。ESP32C5は2.4 GHz／
+   5 GHz、ESP32S3／C3／C6は2.4 GHzに対応します。
 
 ## 3. OSC送信先を設定する
 

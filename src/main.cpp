@@ -23,6 +23,65 @@ uint8_t encoderPreviousState = 0;
 int8_t encoderTransitionAccumulator = 0;
 float encoderAbsoluteValue = 0.0f;
 
+#if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
+struct EncoderDiagnosticEvent {
+  uint32_t timeUs;
+  uint32_t pollGapUs;
+  uint8_t previous;
+  uint8_t current;
+  int8_t delta;
+  int8_t accumulator;
+};
+
+constexpr size_t ENCODER_DIAGNOSTIC_EVENT_CAPACITY = 96;
+EncoderDiagnosticEvent
+    encoderDiagnosticEvents[ENCODER_DIAGNOSTIC_EVENT_CAPACITY];
+size_t encoderDiagnosticEventCount = 0;
+uint32_t encoderDiagnosticDroppedEvents = 0;
+uint32_t encoderDiagnosticLastPollUs = 0;
+uint32_t encoderDiagnosticLastChangeUs = 0;
+uint32_t encoderDiagnosticTransitions = 0;
+uint32_t encoderDiagnosticInvalidTransitions = 0;
+uint32_t encoderDiagnosticMaxPollGapUs = 0;
+uint32_t encoderDiagnosticMaxNetworkUs = 0;
+uint32_t encoderDiagnosticMaxMatrixUs = 0;
+uint32_t encoderDiagnosticMaxEncoderUs = 0;
+
+void flushEncoderDiagnostics() {
+  if (encoderDiagnosticEventCount == 0) return;
+  for (size_t i = 0; i < encoderDiagnosticEventCount; ++i) {
+    const EncoderDiagnosticEvent& event = encoderDiagnosticEvents[i];
+    Serial.printf(
+        "[Encoder diag] t=%luus AB=%u%u->%u%u delta=%d acc=%d gap=%luus\n",
+        static_cast<unsigned long>(event.timeUs),
+        (event.previous >> 1) & 1, event.previous & 1,
+        (event.current >> 1) & 1, event.current & 1,
+        static_cast<int>(event.delta), static_cast<int>(event.accumulator),
+        static_cast<unsigned long>(event.pollGapUs));
+  }
+  Serial.printf(
+      "[Encoder diag summary] changes=%lu invalid=%lu dropped=%lu "
+      "max-gap=%luus network=%luus matrix=%luus encoder=%luus\n",
+      static_cast<unsigned long>(encoderDiagnosticTransitions),
+      static_cast<unsigned long>(encoderDiagnosticInvalidTransitions),
+      static_cast<unsigned long>(encoderDiagnosticDroppedEvents),
+      static_cast<unsigned long>(encoderDiagnosticMaxPollGapUs),
+      static_cast<unsigned long>(encoderDiagnosticMaxNetworkUs),
+      static_cast<unsigned long>(encoderDiagnosticMaxMatrixUs),
+      static_cast<unsigned long>(encoderDiagnosticMaxEncoderUs));
+  encoderDiagnosticEventCount = 0;
+  encoderDiagnosticDroppedEvents = 0;
+  encoderDiagnosticTransitions = 0;
+  encoderDiagnosticInvalidTransitions = 0;
+  encoderDiagnosticMaxPollGapUs = 0;
+  encoderDiagnosticMaxNetworkUs = 0;
+  encoderDiagnosticMaxMatrixUs = 0;
+  encoderDiagnosticMaxEncoderUs = 0;
+  // Exclude the diagnostic output time itself from the next poll-gap result.
+  encoderDiagnosticLastPollUs = micros();
+}
+#endif
+
 bool oscReady(const String& address, const String& value) {
   if (!networkIsConnected()) {
     Serial.printf("[OSC] skipped (WiFi disconnected): %s %s\n",
@@ -125,10 +184,14 @@ void scanMatrix() {
 
   bool samples[KEY_COUNT] = {};
 
-  // Inactive rows remain high impedance. The active row is driven LOW and
-  // columns use internal pull-ups, so a pressed switch reads LOW.
+  // ESP32C5 configures rows once as open-drain outputs because changing
+  // pinMode during every scan takes about 50 ms on its current Arduino core.
+  // Other targets retain the previously tested INPUT/OUTPUT scan behavior.
   for (uint8_t row = 0; row < ROW_COUNT; ++row) {
+#if !defined(CHAINOSCPAD_BOARD_XIAO_ESP32C5) && \
+    !defined(CONFIG_IDF_TARGET_ESP32C5)
     pinMode(ROW_PINS[row], OUTPUT);
+#endif
     digitalWrite(ROW_PINS[row], LOW);
     delayMicroseconds(3);
 
@@ -136,7 +199,11 @@ void scanMatrix() {
       samples[row * COL_COUNT + col] = digitalRead(COL_PINS[col]) == LOW;
     }
 
+#if defined(CHAINOSCPAD_BOARD_XIAO_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C5)
+    digitalWrite(ROW_PINS[row], HIGH);
+#else
     pinMode(ROW_PINS[row], INPUT);
+#endif
   }
 
   const uint32_t nowMs = millis();
@@ -178,12 +245,42 @@ void pollEncoder() {
   static constexpr int8_t TRANSITION_TABLE[16] = {
       0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
 
+#if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
+  const uint32_t pollUs = micros();
+  const uint32_t pollGapUs = encoderDiagnosticLastPollUs == 0
+                                 ? 0
+                                 : pollUs - encoderDiagnosticLastPollUs;
+  encoderDiagnosticLastPollUs = pollUs;
+  encoderDiagnosticMaxPollGapUs =
+      max(encoderDiagnosticMaxPollGapUs, pollGapUs);
+#endif
+
+  const uint8_t previous = encoderPreviousState;
   const uint8_t current =
       (digitalRead(ENCODER_A_PIN) == HIGH ? 2 : 0) |
       (digitalRead(ENCODER_B_PIN) == HIGH ? 1 : 0);
-  const uint8_t transition = (encoderPreviousState << 2) | current;
+  const uint8_t transition = (previous << 2) | current;
   encoderPreviousState = current;
-  encoderTransitionAccumulator += TRANSITION_TABLE[transition];
+  const int8_t delta = TRANSITION_TABLE[transition];
+  encoderTransitionAccumulator += delta;
+
+#if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
+  if (current != previous) {
+    ++encoderDiagnosticTransitions;
+    if (delta == 0) ++encoderDiagnosticInvalidTransitions;
+    encoderDiagnosticLastChangeUs = pollUs;
+    if (encoderDiagnosticEventCount < ENCODER_DIAGNOSTIC_EVENT_CAPACITY) {
+      encoderDiagnosticEvents[encoderDiagnosticEventCount++] = {
+          pollUs, pollGapUs, previous, current, delta,
+          encoderTransitionAccumulator};
+    } else {
+      ++encoderDiagnosticDroppedEvents;
+    }
+  }
+  if (encoderDiagnosticEventCount > 0 &&
+      pollUs - encoderDiagnosticLastChangeUs >= 200000)
+    flushEncoderDiagnostics();
+#endif
 
   if (encoderTransitionAccumulator >= ENCODER_TRANSITIONS_PER_DETENT) {
     encoderTransitionAccumulator = 0;
@@ -204,7 +301,14 @@ void pollEncoder() {
 }
 
 void setupPins() {
-  for (uint8_t row = 0; row < ROW_COUNT; ++row) pinMode(ROW_PINS[row], INPUT);
+  for (uint8_t row = 0; row < ROW_COUNT; ++row) {
+#if defined(CHAINOSCPAD_BOARD_XIAO_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C5)
+    pinMode(ROW_PINS[row], OUTPUT_OPEN_DRAIN);
+    digitalWrite(ROW_PINS[row], HIGH);
+#else
+    pinMode(ROW_PINS[row], INPUT);
+#endif
+  }
   for (uint8_t col = 0; col < COL_COUNT; ++col)
     pinMode(COL_PINS[col], INPUT_PULLUP);
 
@@ -214,6 +318,14 @@ void setupPins() {
   encoderPreviousState =
       (digitalRead(ENCODER_A_PIN) == HIGH ? 2 : 0) |
       (digitalRead(ENCODER_B_PIN) == HIGH ? 1 : 0);
+#if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
+  Serial.printf("[Encoder diag] enabled A=D7/GPIO%u B=D8/GPIO%u initial=%u%u "
+                "transitions-per-detent=%d\n",
+                static_cast<unsigned>(ENCODER_A_PIN),
+                static_cast<unsigned>(ENCODER_B_PIN),
+                (encoderPreviousState >> 1) & 1, encoderPreviousState & 1,
+                static_cast<int>(ENCODER_TRANSITIONS_PER_DETENT));
+#endif
 }
 
 }  // namespace
@@ -229,10 +341,33 @@ void appSetup() {
 }
 
 void appLoop() {
+#if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
+  uint32_t phaseStartUs = micros();
+#endif
   networkLoop();
+#if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
+  uint32_t phaseEndUs = micros();
+  encoderDiagnosticMaxNetworkUs =
+      max(encoderDiagnosticMaxNetworkUs, phaseEndUs - phaseStartUs);
+  phaseStartUs = phaseEndUs;
+#endif
   scanMatrix();
+#if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
+  phaseEndUs = micros();
+  encoderDiagnosticMaxMatrixUs =
+      max(encoderDiagnosticMaxMatrixUs, phaseEndUs - phaseStartUs);
+  phaseStartUs = phaseEndUs;
+#endif
   pollEncoder();
-  delay(1);
+#if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
+  phaseEndUs = micros();
+  encoderDiagnosticMaxEncoderUs =
+      max(encoderDiagnosticMaxEncoderUs, phaseEndUs - phaseStartUs);
+#endif
+  // Do not call delay(1) or yield() here. On the current ESP32C5
+  // Arduino/FreeRTOS configuration both can wait for an approximately 50 ms
+  // scheduler tick, which is long enough to miss quadrature transitions.
+  // Higher-priority Wi-Fi/system tasks are still scheduled preemptively.
 }
 
 #if defined(CHAINOSCPAD_PLATFORMIO)

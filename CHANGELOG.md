@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
+
+- Add PlatformIO, GitHub Release, and Web Installer support for XIAO ESP32C3 and XIAO ESP32C5
+- Show all supported XIAO models as hardware names in the Web UI
+- Add ESP32C5 2.4 GHz and 5 GHz Wi-Fi guidance
+- Fix slow ESP32C5 rotary encoder polling by disabling the WebServer idle delay and avoiding repeated matrix-row pin mode changes
+- Validate Sequence direction and Step consistently during preset import and Web UI save
 
 ## 0.6.1
 

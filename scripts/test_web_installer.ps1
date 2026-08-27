@@ -38,6 +38,8 @@ Copy-Item -Path (Join-Path $repo 'docs\*') -Destination $site -Recurse -Force
 
 $targets = @(
   @{ Environment = 'xiao_esp32s3'; ChipFamily = 'ESP32-S3'; Slug = 'XIAO-ESP32S3'; Chip = 'esp32s3'; FlashSize = '8MB' },
+  @{ Environment = 'xiao_esp32c3'; ChipFamily = 'ESP32-C3'; Slug = 'XIAO-ESP32C3'; Chip = 'esp32c3'; FlashSize = '4MB' },
+  @{ Environment = 'xiao_esp32c5'; ChipFamily = 'ESP32-C5'; Slug = 'XIAO-ESP32C5'; Chip = 'esp32c5'; FlashSize = '8MB' },
   @{ Environment = 'xiao_esp32c6'; ChipFamily = 'ESP32-C6'; Slug = 'XIAO-ESP32C6'; Chip = 'esp32c6'; FlashSize = '4MB' }
 )
 

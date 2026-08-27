@@ -4,10 +4,10 @@
 
 This project's software, website, and documentation are created in collaboration with OpenAI Codex.
 
-XIAO ESP32S3／ESP32C6に対応した、3列×4行キーマトリクスと
+XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマトリクスと
 ロータリーエンコーダーを搭載するWi-Fi OSCコントローラーです。
 
-## Version 0.6.1
+## Version 0.7.0
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
@@ -22,7 +22,7 @@ XIAO ESP32S3／ESP32C6に対応した、3列×4行キーマトリクスと
 - 全体設定をバージョン付きJSONでエクスポート／インポート（Wi-Fi認証情報を除外）
 - Key／EncoderプリセットをChainOSC共通JSON形式でエクスポート／インポート
 - Web UIの日本語／英語切り替えと選択言語の保存
-- Web UIのシステム欄にXIAO ESP32S3／ESP32C6のモデル名を表示
+- Web UIのシステム欄にXIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6のモデル名を表示
 
 変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
 実機確認項目は[TESTING.md](TESTING.md)にまとめています。
@@ -44,7 +44,8 @@ XIAO ESP32S3／ESP32C6に対応した、3列×4行キーマトリクスと
 2. PCまたはスマートフォンからWi-Fi AP`ChainOSCPad-Setup`へ接続します。
 3. パスワード`12345678`を入力します。
 4. 設定画面が自動表示されない場合は`http://192.168.4.1/`を開きます。
-5. 使用する2.4 GHz Wi-FiのSSID／パスワードとOSC送信先を保存します。
+5. 使用するWi-FiのSSID／パスワードとOSC送信先を保存します。ESP32C5は
+   2.4 GHz／5 GHz、ESP32S3／C3／C6は2.4 GHzに対応します。
 6. 自動再起動後、同じLANから`http://chainoscpad.local/`を開けます。
 
 保存済みWi-Fiへ起動後15秒以内に接続できない場合も、設定APモードへ移行します。
@@ -89,7 +90,7 @@ OSC送信先、Key 1～12、Encoderは、画面下部の「すべての設定を
 | D10 | 9 | 18 | Spare（未使用） |
 
 エンコーダーの共通端子とPushの反対側はGNDへ接続します。A、B、Pushには
-XIAO ESP32S3／ESP32C6の内部プルアップを使用します。
+各対応XIAOの内部プルアップを使用します。
 
 ### マトリクスのダイオード
 
@@ -153,21 +154,25 @@ Version 0.2.0ではWi-FiとOSC送信先をブラウザーから設定するた�
 ```powershell
 pio run
 pio run -e xiao_esp32s3
+pio run -e xiao_esp32c3
+pio run -e xiao_esp32c5
 pio run -e xiao_esp32c6
 pio run -e xiao_esp32s3 --target upload
+pio run -e xiao_esp32c3 --target upload
+pio run -e xiao_esp32c5 --target upload
 pio run -e xiao_esp32c6 --target upload
 pio device monitor --baud 115200
 ```
 
-環境別のファームウェアは`.pio/build/xiao_esp32s3/`と
-`.pio/build/xiao_esp32c6/`に生成されます。将来の自動ビルドやWeb Installerでは、
-この環境名を成果物名とマニフェストの対象名に使用できます。
+環境別のファームウェアは`.pio/build/xiao_esp32s3/`、`.pio/build/xiao_esp32c3/`、
+`.pio/build/xiao_esp32c5/`、`.pio/build/xiao_esp32c6/`に生成されます。
 
 ## 自動ビルドとWeb Installer
 
-`vX.Y.Z`タグのpushまたは手動実行で、GitHub Actionsが`xiao_esp32s3`と
-`xiao_esp32c6`を個別にビルドします。各環境の統合書き込み用binとSHA-256を
-Actions Artifactとして保存し、タグ実行時は両環境のファイルを添付したDraft Releaseを
+`vX.Y.Z`タグのpushまたは手動実行で、GitHub Actionsが`xiao_esp32s3`、
+`xiao_esp32c3`、`xiao_esp32c5`、`xiao_esp32c6`を個別にビルドします。
+各環境の統合書き込み用binとSHA-256を
+Actions Artifactとして保存し、タグ実行時は4環境のファイルを添付したDraft Releaseを
 自動作成します。内容を確認してDraftを公開してください。
 
 GitHub Pagesの製品ポータル、Web Installer、製品アイコンは`docs/`に格納しています。
@@ -179,12 +184,15 @@ Web InstallerをGitHub Pagesへ公開します。Draftの間は現在の公開�
 `GitHub Actions`に設定してください。公開先は通常、
 `https://shimez.github.io/ChainOSCPad/`です。ポータルのWeb Installerリンクから
 `https://shimez.github.io/ChainOSCPad/installer/`を開き、PC版Google Chromeまたは
-Microsoft Edgeで接続したXIAOへ書き込めます。チップに合うS3/C6ファームウェアは
+Microsoft Edgeで接続したXIAOへ書き込めます。チップに合うS3/C3/C5/C6ファームウェアは
 インストーラーが自動選択します。OG／Twitterカードは製品ポータル用です。
+
+C3/C5はPlatformIOとReleaseのビルド対象です。Web Installerへの追加は、実機での
+書き込みと基本動作を確認した後に行います。
 
 ### Web Installerを公開前にテストする
 
-PowerShellで次を実行すると、S3/C6をビルドして統合binを生成し、manifestとファームウェア構成を検証して、
+PowerShellで次を実行すると、S3/C3/C5/C6をビルドして統合binを生成し、manifestとファームウェア構成を検証して、
 ローカルWeb Installerを`http://127.0.0.1:8765/installer/`で起動します。
 
 ```powershell
@@ -194,13 +202,14 @@ powershell -ExecutionPolicy Bypass -File .\scripts\test_web_installer.ps1
 すでに両環境をビルド済みなら`-SkipBuild`、ファイル検証だけなら`-CheckOnly`も指定できます。
 ChromeまたはEdgeでInstallerを開き、XIAO ESP32S3とESP32C6を1台ずつUSB接続して、
 それぞれ書き込みを確認してください。ESP Web ToolsはUSBから取得したチップ種別と
-manifestの`ESP32-S3`／`ESP32-C6`を照合して対象ファームウェアを選択します。
+manifestの`ESP32-S3`／`ESP32-C3`／`ESP32-C5`／`ESP32-C6`を照合して対象ファームウェアを選択します。
 
 S3環境は既存動作を維持するためEspressif 32 Platform 6.9.0を使用します。C6環境は
 Seeed Studio公式PlatformIO platformのWindowsで検証したリビジョンを使用します。
 
 シリアルモニターは115200 bpsです。OSC受信機とChainOSCPadは同じLANへ接続して
-ください。ESP32S3／ESP32C6のWi-Fiは2.4 GHz帯を使用します。
+ください。ESP32C5は2.4 GHz／5 GHz、ESP32S3／C3／C6は2.4 GHz帯を
+使用します。
 
 ## 調整項目
 
@@ -208,6 +217,36 @@ Seeed Studio公式PlatformIO platformのWindowsで検証したリビジョンを
 `ENCODER_TRANSITIONS_PER_DETENT`を`4`から`2`または`1`へ変更します。
 
 回転方向が逆の場合は、D7とD8を入れ替えるのが簡単です。
+
+### ESP32C5 Encoder診断
+
+調査時は`xiao_esp32c5`環境のbuild flagsへ
+`-DCHAINOSCPAD_ENCODER_DIAGNOSTICS=1`を追加します。115200 bpsの
+シリアルモニターを開き、時計回り1クリック、
+反時計回り1クリック、時計回り10クリック、反時計回り10クリック、速い回転の
+順に試してください。回転中の状態はRAMへ記録され、200 ms静止するとまとめて
+シリアルへ出力されるため、ログ出力自体による取りこぼしを抑えています。
+
+- `AB`：D7／D8の直前と現在の論理状態
+- `delta`：正常遷移の方向（`1`または`-1`）。`0`は同時変化などの無効遷移
+- `acc`：1クリック判定までの累積遷移数。現在の判定値は`4`
+- `invalid`：一連の回転中に検出した無効遷移数
+- `dropped`：診断用RAMバッファへ収まらなかった状態遷移数
+- `max-gap`：一連の回転中で最長のEncoderポーリング間隔
+- `network`／`matrix`／`encoder`：各処理ブロックの最大実行時間
+
+1クリックで4つの同方向遷移が揃わない場合は、エンコーダーの遷移数または接点の
+問題を疑います。速い回転時だけ`max-gap`が大きくなって欠落する場合は、処理待ちに
+よるポーリングの取りこぼしを疑います。公開用ビルドでは診断フラグを設定しません。
+
+ESP32C5が使用するArduino-ESP32 3.3.7の`WebServer::handleClient()`は、待機中の
+HTTPクライアントがない場合に内部で`delay(1)`を呼びます。この環境では約50 msの
+停止になりEncoderの状態遷移を取りこぼすため、C5のみ`enableDelay(false)`で
+WebServerのidle delayを無効化します。メインループでも明示的な待機は行いません。
+
+また、C5のみROWピンを起動時に一度だけオープンドレイン出力へ設定します。走査中は
+LOWとハイインピーダンスを切り替え、時間のかかる`pinMode()`を毎回呼ばない構成です。
+S3／C3／C6は従来のINPUT／OUTPUT切り替え方式を維持します。
 
 ## ライセンス
 

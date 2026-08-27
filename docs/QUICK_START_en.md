@@ -14,7 +14,7 @@ This guide covers firmware installation, Wi-Fi setup and a basic OSC transmissio
 
 - An assembled ChainOSCPad with XIAO ESP32S3 or XIAO ESP32C6
 - A data-capable USB Type-C cable
-- A 2.4 GHz Wi-Fi network
+- A supported Wi-Fi network (2.4/5 GHz on ESP32C5; 2.4 GHz on ESP32S3/C3/C6)
 - Desktop Chrome or Edge
 - An OSC receiver
 
@@ -29,7 +29,7 @@ If the port is not listed, hold the XIAO BOOT button while reconnecting USB.
 
 ## 2. Configure Wi-Fi
 
-Connect to `ChainOSCPad-Setup` with password `12345678`. If the captive portal does not open, visit `http://192.168.4.1/`, then save your 2.4 GHz Wi-Fi credentials.
+Connect to `ChainOSCPad-Setup` with password `12345678`. If the captive portal does not open, visit `http://192.168.4.1/`, then save your Wi-Fi credentials. ESP32C5 supports 2.4 GHz and 5 GHz; ESP32S3/C3/C6 use 2.4 GHz.
 
 ## 3. Configure OSC and test
 

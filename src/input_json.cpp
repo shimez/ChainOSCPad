@@ -51,6 +51,10 @@ bool jsonMessage(JsonObjectConst object, OscMessageSetting& message,
     return false;
   }
   message.type = static_cast<OscValueType>(type);
+  if (message.value.length() > 128) {
+    error = "E_OSC_VALUE_TOO_LONG";
+    return false;
+  }
   if (!inputOscMessageValid(message)) {
     error = "OSC message address or value is invalid.";
     return false;
@@ -76,8 +80,22 @@ bool jsonSequence(JsonObjectConst object, SequenceSetting& sequence,
     return false;
   }
   sequence.type = static_cast<OscValueType>(type);
+  if (!isfinite(sequence.start) || !isfinite(sequence.end) ||
+      !isfinite(sequence.step)) {
+    error = "Sequence values are invalid.";
+    return false;
+  }
+  if (sequence.step == 0.0f) {
+    error = "E_SEQUENCE_STEP_ZERO";
+    return false;
+  }
+  if ((sequence.start < sequence.end && sequence.step < 0.0f) ||
+      (sequence.start > sequence.end && sequence.step > 0.0f)) {
+    error = "E_SEQUENCE_DIRECTION_INVALID";
+    return false;
+  }
   if (!inputSequenceSettingValid(sequence)) {
-    error = "Sequence Step must be non-zero and move from Start toward End.";
+    error = "Sequence values are invalid.";
     return false;
   }
   sequence.current = sequence.start;

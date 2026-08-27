@@ -1,10 +1,12 @@
-# Version 0.6.1 実機確認
+# Version 0.7.0 実機確認
 
 ## ビルド対象
 
 - [x] PlatformIOの`xiao_esp32s3`環境でビルドできる
+- [x] PlatformIOの`xiao_esp32c3`環境でビルドできる
+- [x] PlatformIOの`xiao_esp32c5`環境でビルドできる
 - [x] PlatformIOの`xiao_esp32c6`環境でビルドできる
-- [x] GitHub ActionsでS3/C6の両ジョブが成功し、各Artifactをダウンロードできる
+- [ ] GitHub ActionsでS3/C3/C5/C6の4ジョブが成功し、各Artifactをダウンロードできる
 - [x] GitHub PagesのWeb InstallerがHTTPSで表示される
 - [x] GitHub Pagesのルートに製品ポータルが表示され、Web Installerへのリンクが機能する
 - [x] Web Installerが`/ChainOSCPad/installer/`に表示される
@@ -13,11 +15,25 @@
 - [x] Web Installerの赤いキー配置アイコンがブラウザータブへ表示される
 - [x] 32px favicon、Apple Touch Icon、OG画像がGitHub Pagesから取得できる
 - [x] Web InstallerがXIAO ESP32S3を判定して書き込みできる
+- [ ] Web InstallerがXIAO ESP32C3を判定して書き込みできる
+- [ ] Web InstallerがXIAO ESP32C5を判定して書き込みできる
 - [x] Web InstallerがXIAO ESP32C6を判定して書き込みできる
-- [x] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C6のmanifest振り分けと全ファイルを検証できる
+- [ ] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C3/C5/C6のmanifest振り分けと全ファイルを検証できる
 - [x] Web Installerで書き込んだ各機種が起動し、AP Modeと既存設定画面を利用できる
 - [x] XIAO ESP32C6へ書き込み、起動ログに製品名とバージョンが表示される
 - [x] XIAO ESP32C6で以下のS3向け実機確認項目も同様に動作する
+- [ ] XIAO ESP32C3をBOOTボタンを押しながらUSB接続し、Uploadできて正常に起動する
+- [x] XIAO ESP32C5へUploadでき、正常に起動する
+- [x] XIAO ESP32C5が5 GHz帯Wi-Fiへ接続できる
+- [x] C5でEncoderを時計回りに1クリックずつ10回回し、診断ログを採取する
+- [x] C5でEncoderを反時計回りに1クリックずつ10回回し、診断ログを採取する
+- [x] C5でEncoderを通常速度と速い速度で各10クリック回し、欠落数と`max-gap`を比較する
+- [x] C5の診断ログで通常時の`max-gap`が50 ms前後から十分短くなったことを確認する
+- [x] C5の起動ログに`[Web] idle delay disabled for ESP32C5`と表示される
+- [x] C5診断サマリーから約50 ms停止する処理がキーマトリクス走査だと特定できる
+- [x] C5でROWをopen-drain固定した後、診断ログの`matrix`が約50 msから十分短くなる
+- [x] C5でKey 1～12と複数同時押しが従来どおり動作する
+- [x] C5を数分間動作させてもwatchdog resetやWi-Fi切断が発生しない
 
 ### XIAO ESP32C6 大容量設定
 
@@ -36,6 +52,8 @@
 - [x] ネットワーク、入力設定、追加したOSC行、確認・エラー表示が選択言語になる
 - [x] 通常のルート画面に言語、システム、WiFi、JSON、OSC、Key 1～12、Encoderが順番どおり表示される
 - [x] XIAO ESP32S3版のシステム欄に`XIAO ESP32S3`と表示される
+- [x] XIAO ESP32C3版のシステム欄に`XIAO ESP32C3`と表示される
+- [x] XIAO ESP32C5版のシステム欄に`XIAO ESP32C5`と表示される
 - [x] XIAO ESP32C6版のシステム欄に`XIAO ESP32C6`と表示される
 - [x] システム欄に製品名、ハードウェア、バージョン、IPアドレス、mDNS名が表示される
 - [x] 横幅の広いブラウザーで通常画面の左右に適度な余白が表示される
@@ -67,6 +85,8 @@
 - [x] キャプティブポータルに言語、システム、JSON、OSC、入力設定が表示されない
 - [x] Wi-Fi設定を保存すると再起動する
 - [x] 保存した2.4 GHz Wi-Fiへ接続する
+- [x] ESP32C5のキャプティブポータルに2.4 GHz／5 GHz対応と表示される
+- [x] ESP32S3／C3／C6のキャプティブポータルに2.4 GHz対応と表示される
 - [x] シリアルへ接続IPとOSC送信先が表示される
 - [x] `http://chainoscpad.local/`で設定画面が表示される
 
@@ -150,8 +170,8 @@
 
 - [x] 製品ポータルから日本語／英語のクイックスタートとユーザーガイドを開ける
 - [x] 製品ポータルからWeb Installerを開ける
-- [x] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C6の統合binとmanifestを検証できる
+- [ ] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C3/C5/C6の統合binとmanifestを検証できる
 - [x] `vX.Y.Z`タグと`APP_VERSION`／Installer manifestのバージョンが異なる場合、Releaseビルドが失敗する
-- [x] 正しい`vX.Y.Z`タグでS3/C6の統合binとSHA-256を添付したDraft Releaseが作成される
+- [ ] 正しい`vX.Y.Z`タグでS3/C3/C5/C6の統合binとSHA-256を添付したDraft Releaseが作成される
 - [x] Draft Releaseを公開すると、同じバージョンのファームウェアを使用するGitHub Pagesが公開される
 - [x] 公開済みReleaseがないバージョンでは、現在のGitHub Pagesが置き換えられない

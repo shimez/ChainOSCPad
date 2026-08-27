@@ -8,13 +8,13 @@ permalink: /en/user-guide/
 
 [日本語版](../../user-guide/)
 
-ChainOSCPad sends OSC from 12 Keys and a rotary Encoder with rotation and click. It supports XIAO ESP32S3 and XIAO ESP32C6.
+ChainOSCPad sends OSC from 12 Keys and a rotary Encoder with rotation and click. It supports XIAO ESP32S3, ESP32C3, ESP32C5 and ESP32C6.
 
 > ChainOSCPad is an independent, unofficial project and is not an official product of Seeed Studio or any other hardware manufacturer.
 
 ## 1. Initial Wi-Fi setup
 
-Power the device, connect to `ChainOSCPad-Setup` with password `12345678`, then select and save a 2.4 GHz Wi-Fi network. If the captive portal does not open, visit `http://192.168.4.1/`. The captive portal only configures Wi-Fi.
+Power the device, connect to `ChainOSCPad-Setup` with password `12345678`, then select and save a Wi-Fi network. ESP32C5 supports 2.4 GHz and 5 GHz; ESP32S3/C3/C6 use 2.4 GHz. If the captive portal does not open, visit `http://192.168.4.1/`. The captive portal only configures Wi-Fi.
 
 ## 2. Open the settings page
 

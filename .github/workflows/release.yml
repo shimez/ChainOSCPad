@@ -26,6 +26,16 @@ jobs:
             slug: XIAO-ESP32S3
             chip: esp32s3
             flash_size: 8MB
+          - environment: xiao_esp32c3
+            label: XIAO ESP32C3
+            slug: XIAO-ESP32C3
+            chip: esp32c3
+            flash_size: 4MB
+          - environment: xiao_esp32c5
+            label: XIAO ESP32C5
+            slug: XIAO-ESP32C5
+            chip: esp32c5
+            flash_size: 8MB
           - environment: xiao_esp32c6
             label: XIAO ESP32C6
             slug: XIAO-ESP32C6
@@ -65,8 +75,12 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           firmware="ChainOSCPad-${VERSION}-${{ matrix.slug }}-merged.bin"
+          esptool="$(find "$HOME/.platformio" -path '*/tool-esptoolpy/esptool.py' -print -quit)"
+          boot_app="$(find "$HOME/.platformio/packages" -path '*/tools/partitions/boot_app0.bin' -print -quit)"
+          test -n "$esptool"
+          test -n "$boot_app"
           mkdir -p dist
-          python "$HOME/.platformio/packages/tool-esptoolpy/esptool.py" \
+          python "$esptool" \
             --chip "${{ matrix.chip }}" merge_bin \
             -o "dist/$firmware" \
             --flash_mode dio \
@@ -74,7 +88,7 @@ jobs:
             --flash_size "${{ matrix.flash_size }}" \
             0x0 ".pio/build/${{ matrix.environment }}/bootloader.bin" \
             0x8000 ".pio/build/${{ matrix.environment }}/partitions.bin" \
-            0xe000 "$HOME/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin" \
+            0xe000 "$boot_app" \
             0x10000 ".pio/build/${{ matrix.environment }}/firmware.bin"
           sha256sum "dist/$firmware" > "dist/ChainOSCPad-${VERSION}-${{ matrix.slug }}-SHA256.txt"
 

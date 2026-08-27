@@ -13,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 TARGETS = (
     ("ESP32-S3", "XIAO-ESP32S3"),
+    ("ESP32-C3", "XIAO-ESP32C3"),
+    ("ESP32-C5", "XIAO-ESP32C5"),
     ("ESP32-C6", "XIAO-ESP32C6"),
 )
 
