@@ -1,4 +1,4 @@
-# Version 0.7.0 実機確認
+# Version 0.8.0 実機確認
 
 ## ビルド対象
 
@@ -16,8 +16,8 @@
 - [x] 32px favicon、Apple Touch Icon、OG画像がGitHub Pagesから取得できる
 - [x] Web InstallerがXIAO ESP32S3を判定して書き込みできる
 - [ ] Web InstallerがXIAO ESP32C3を判定して書き込みできる
-- [ ] Web InstallerがXIAO ESP32C5を判定して書き込みできる
-- [ ] C5用merged.binの`0x2000`にESPイメージヘッダー`0xE9`があり、Web Installer書き込み後に起動する
+- [x] Web InstallerがXIAO ESP32C5を判定して書き込みできる
+- [x] C5用merged.binの`0x2000`にESPイメージヘッダー`0xE9`があり、Web Installer書き込み後に起動する
 - [x] Web InstallerがXIAO ESP32C6を判定して書き込みできる
 - [ ] `scripts/test_web_installer.ps1 -SkipBuild -CheckOnly`でS3/C3/C5/C6のmanifest振り分けと全ファイルを検証できる
 - [x] Web Installerで書き込んだ各機種が起動し、AP Modeと既存設定画面を利用できる
@@ -77,6 +77,18 @@
 - [x] 異なるデバイス種類、破損JSON、不正なAddress、9件以上のメッセージを拒否する
 - [x] 16 KiBを超えるプリセットと64 KiBを超える全体設定を拒否する
 - [x] 12 Keyを最大容量にした全体設定JSONをエクスポートし、再インポートできる
+
+### Device Preset Import Error Registry v1
+
+- [ ] 共通fixtureのKey向けinvalid JSONが、`expected-errors.json`どおりのError Codeで拒否される
+- [ ] 共通fixtureのEncoder向けinvalid JSONが、`expected-errors.json`どおりのError Codeで拒否される
+- [ ] Angle、ToF、Joystickなど対応済みの異種プリセットが`E_PRESET_DEVICE_TYPE_MISMATCH`で拒否される
+- [ ] 未知の`deviceType`が`E_PRESET_DEVICE_TYPE_UNSUPPORTED`で拒否される
+- [ ] 0バイト、16 KiB超過、JSON構文不正、format不正、schemaVersion不正を対応するError Codeで拒否する
+- [ ] エラー表示を日本語と英語へ切り替えても、原因と修正方法が一致する
+- [ ] 拒否後に画面上の設定、保存済み設定およびOSC送信内容が変化しない
+- [ ] 再起動後もインポート前の設定が維持される
+- [ ] 正常なKey／Encoderプリセットは従来どおりインポート、保存、OSC送信できる
 
 ## 初回セットアップ
 

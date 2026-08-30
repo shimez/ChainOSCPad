@@ -30,6 +30,21 @@ if (-not (Test-Path -LiteralPath $python)) {
   throw 'The PlatformIO Python runtime was not found.'
 }
 
+$esptool = $null
+$esptoolCandidates = Get-ChildItem (Join-Path $env:USERPROFILE '.platformio\packages') -Recurse -File -Filter esptool.py |
+  Where-Object { $_.FullName -match '[\\/]tool-esptoolpy[^\\/]*[\\/]esptool\.py$' } |
+  Sort-Object LastWriteTime -Descending
+foreach ($candidate in $esptoolCandidates) {
+  & $python $candidate.FullName --chip esp32c5 version *> $null
+  if ($LASTEXITCODE -eq 0) {
+    $esptool = $candidate
+    break
+  }
+}
+if (-not $esptool) {
+  throw 'An ESP32-C5-compatible esptool.py was not found in the PlatformIO packages.'
+}
+
 if (Test-Path -LiteralPath $site) {
   Remove-Item -LiteralPath $site -Recurse -Force
 }
@@ -39,7 +54,7 @@ Copy-Item -Path (Join-Path $repo 'docs\*') -Destination $site -Recurse -Force
 $targets = @(
   @{ Environment = 'xiao_esp32s3'; ChipFamily = 'ESP32-S3'; Slug = 'XIAO-ESP32S3'; Chip = 'esp32s3'; FlashSize = '8MB'; FlashMode = 'dio'; BootOffset = 0x0 },
   @{ Environment = 'xiao_esp32c3'; ChipFamily = 'ESP32-C3'; Slug = 'XIAO-ESP32C3'; Chip = 'esp32c3'; FlashSize = '4MB'; FlashMode = 'dio'; BootOffset = 0x0 },
-  @{ Environment = 'xiao_esp32c5'; ChipFamily = 'ESP32-C5'; Slug = 'XIAO-ESP32C5'; Chip = 'esp32c5'; FlashSize = '8MB'; FlashMode = 'qio'; BootOffset = 0x2000 },
+  @{ Environment = 'xiao_esp32c5'; ChipFamily = 'ESP32-C5'; Slug = 'XIAO-ESP32C5'; Chip = 'esp32c5'; FlashSize = '8MB'; FlashMode = 'dio'; BootOffset = 0x2000 },
   @{ Environment = 'xiao_esp32c6'; ChipFamily = 'ESP32-C6'; Slug = 'XIAO-ESP32C6'; Chip = 'esp32c6'; FlashSize = '4MB'; FlashMode = 'dio'; BootOffset = 0x0 }
 )
 
@@ -76,13 +91,6 @@ foreach ($target in $targets) {
   if (-not $bootApp) {
     throw 'boot_app0.bin was not found in the PlatformIO packages.'
   }
-  $esptool = Get-ChildItem (Join-Path $env:USERPROFILE '.platformio\packages') -Recurse -File -Filter esptool.py |
-    Where-Object { $_.FullName -match '[\\/]tool-esptoolpy[\\/]esptool\.py$' } |
-    Select-Object -First 1
-  if (-not $esptool) {
-    throw 'esptool.py was not found in the PlatformIO packages.'
-  }
-
   $firmwareName = "ChainOSCPad-$version-$($target.Slug)-merged.bin"
   $mergedFirmware = Join-Path $firmwareDirectory $firmwareName
   & $python $esptool.FullName --chip $target.Chip merge_bin -o $mergedFirmware `

@@ -1,12 +1,19 @@
 # Changelog
 
+## 0.8.0
+
+- Implement all Device Preset Import Error Registry v1 errors applicable to Key and Encoder presets, plus common file, format, device type, and storage errors
+- Reject invalid presets without changing the current or saved input settings
+- Align Japanese and English preset import messages with the ChainOSC series registry
+- Rename the main Web UI heading to `ChainOSCPad Settings`
+
 ## 0.7.0
 
 - Add PlatformIO, GitHub Release, and Web Installer support for XIAO ESP32C3 and XIAO ESP32C5
 - Show all supported XIAO models as hardware names in the Web UI
 - Add ESP32C5 2.4 GHz and 5 GHz Wi-Fi guidance
 - Fix slow ESP32C5 rotary encoder polling by disabling the WebServer idle delay and avoiding repeated matrix-row pin mode changes
-- Generate ESP32C5 Web Installer firmware with its required `0x2000` bootloader offset and QIO flash mode
+- Generate ESP32C5 Web Installer firmware with its required `0x2000` bootloader offset and DIO flash mode
 - Validate Sequence direction and Step consistently during preset import and Web UI save
 
 ## 0.6.1

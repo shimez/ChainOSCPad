@@ -7,7 +7,7 @@ This project's software, website, and documentation are created in collaboration
 XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマトリクスと
 ロータリーエンコーダーを搭載するWi-Fi OSCコントローラーです。
 
-## Version 0.7.0
+## Version 0.8.0
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
@@ -21,6 +21,7 @@ XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマ�
 - 入力設定をLittleFSへ保存
 - 全体設定をバージョン付きJSONでエクスポート／インポート（Wi-Fi認証情報を除外）
 - Key／EncoderプリセットをChainOSC共通JSON形式でエクスポート／インポート
+- Device Preset Import Error Registry v1に準拠したプリセット検証と日英エラーメッセージ
 - Web UIの日本語／英語切り替えと選択言語の保存
 - Web UIのシステム欄にXIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6のモデル名を表示
 
