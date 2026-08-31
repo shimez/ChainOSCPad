@@ -184,14 +184,7 @@ void scanMatrix() {
 
   bool samples[KEY_COUNT] = {};
 
-  // ESP32C5 configures rows once as open-drain outputs because changing
-  // pinMode during every scan takes about 50 ms on its current Arduino core.
-  // Other targets retain the previously tested INPUT/OUTPUT scan behavior.
   for (uint8_t row = 0; row < ROW_COUNT; ++row) {
-#if !defined(CHAINOSCPAD_BOARD_XIAO_ESP32C5) && \
-    !defined(CONFIG_IDF_TARGET_ESP32C5)
-    pinMode(ROW_PINS[row], OUTPUT);
-#endif
     digitalWrite(ROW_PINS[row], LOW);
     delayMicroseconds(3);
 
@@ -199,11 +192,7 @@ void scanMatrix() {
       samples[row * COL_COUNT + col] = digitalRead(COL_PINS[col]) == LOW;
     }
 
-#if defined(CHAINOSCPAD_BOARD_XIAO_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C5)
     digitalWrite(ROW_PINS[row], HIGH);
-#else
-    pinMode(ROW_PINS[row], INPUT);
-#endif
   }
 
   const uint32_t nowMs = millis();
@@ -302,12 +291,8 @@ void pollEncoder() {
 
 void setupPins() {
   for (uint8_t row = 0; row < ROW_COUNT; ++row) {
-#if defined(CHAINOSCPAD_BOARD_XIAO_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C5)
     pinMode(ROW_PINS[row], OUTPUT_OPEN_DRAIN);
     digitalWrite(ROW_PINS[row], HIGH);
-#else
-    pinMode(ROW_PINS[row], INPUT);
-#endif
   }
   for (uint8_t col = 0; col < COL_COUNT; ++col)
     pinMode(COL_PINS[col], INPUT_PULLUP);

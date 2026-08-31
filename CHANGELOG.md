@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1
+
+- Unify matrix row scanning across XIAO ESP32S3, ESP32C3, ESP32C5, and ESP32C6 using open-drain outputs
+
 ## 0.8.0
 
 - Implement all Device Preset Import Error Registry v1 errors applicable to Key and Encoder presets, plus common file, format, device type, and storage errors
