@@ -7,11 +7,11 @@ This project's software, website, and documentation are created in collaboration
 XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマトリクスと
 ロータリーエンコーダーを搭載するWi-Fi OSCコントローラーです。
 
-## Version 0.8.1
+## Version 0.9.0
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
-- Wi-Fi／OSC送信先をESP32のNVSへ保存
+- Wi-Fi／OSC送信先／UI言語をLittleFSへ保存（旧NVS設定は初回起動時に自動移行）
 - `http://chainoscpad.local/`から設定画面へアクセス
 - 設定リセット
 - Arduino IDE／PlatformIO共通ソース

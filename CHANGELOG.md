@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+
+- Move Wi-Fi credentials, OSC target and UI language from NVS to an atomic LittleFS system-settings file
+- Migrate valid legacy NVS settings automatically when no valid LittleFS system-settings file exists
+- Add LittleFS capacity and operation-result logs for system settings
+
 ## 0.8.1
 
 - Unify matrix row scanning across XIAO ESP32S3, ESP32C3, ESP32C5, and ESP32C6 using open-drain outputs
