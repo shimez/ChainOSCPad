@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+## 0.10.0 - 2026-09-01
+
+- Add a red `Delete All Settings` button at the bottom of the Web UI with a destructive-action confirmation
+
 ## 0.9.0
 
 - Move Wi-Fi credentials, OSC target and UI language from NVS to an atomic LittleFS system-settings file
