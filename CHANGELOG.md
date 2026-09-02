@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.0 - 2026-09-02
+
+- Add `Delete All Settings` to the AP Mode captive portal for recovery when the normal Web UI is unavailable
+- Declare ChainOSCPad ready for its first stable release
+
 ## 0.10.0 - 2026-09-01
 
 - Add a red `Delete All Settings` button at the bottom of the Web UI with a destructive-action confirmation

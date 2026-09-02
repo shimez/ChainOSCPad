@@ -17,7 +17,7 @@ inline constexpr uint16_t OSC_TARGET_PORT = 9000;
 #endif
 
 inline constexpr char APP_NAME[] = "ChainOSCPad";
-inline constexpr char APP_VERSION[] = "0.10.0";
+inline constexpr char APP_VERSION[] = "1.0.0";
 
 #if defined(CHAINOSCPAD_BOARD_XIAO_ESP32S3)
 inline constexpr char HARDWARE_NAME[] = "XIAO ESP32S3";
