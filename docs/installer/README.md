@@ -1,7 +1,8 @@
 # ChainOSCPad Web Installer
 
-現在の公開版は`1.0.0`です。
+現在の公開版は`1.0.1`です。
 
+- Version 1.0.1: Encoder／Sequenceの入力検証を強化し、通常画面とAP Modeへfaviconを追加
 - Version 1.0.0: AP Modeのキャプティブポータルからの全設定削除に対応した最初の正式版
 - Version 0.10.0: Web UIから全設定を削除して再起動する機能を追加
 

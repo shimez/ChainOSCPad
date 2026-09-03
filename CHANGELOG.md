@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.0.1 - 2026-09-03
+
+- Add the product portal favicon to the normal Web UI and AP Mode captive portal
+- Align Encoder calculation-value and Sequence input validation with M5ChainOSC
+- Show validation failures below the affected field using the shared red warning style
+
 ## 1.0.0 - 2026-09-02
 
 - Add `Delete All Settings` to the AP Mode captive portal for recovery when the normal Web UI is unavailable
