@@ -20,6 +20,7 @@ struct EncoderInputSetting {
   String displayName="Encoder";
   String rotationAddress="/avatar/parameters/Encoder";
   bool sendIncrement=false;
+  bool wrapAround=true;
   float absoluteInputMin=0, absoluteInputMax=20, incrementScale=.05f;
   float outputMin=0, outputMax=1;
   OscValueType outputType=OSC_TYPE_FLOAT;

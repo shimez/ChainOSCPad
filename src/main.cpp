@@ -216,10 +216,12 @@ void applyEncoderDetent(int8_t direction) {
   } else {
     const float span = setting.absoluteInputMax - setting.absoluteInputMin;
     encoderAbsoluteValue += direction;
-    while (encoderAbsoluteValue >= setting.absoluteInputMax)
-      encoderAbsoluteValue -= span;
-    while (encoderAbsoluteValue < setting.absoluteInputMin)
-      encoderAbsoluteValue += span;
+    if(setting.wrapAround){
+      while (encoderAbsoluteValue >= setting.absoluteInputMax) encoderAbsoluteValue -= span;
+      while (encoderAbsoluteValue < setting.absoluteInputMin) encoderAbsoluteValue += span;
+    }else{
+      encoderAbsoluteValue=constrain(encoderAbsoluteValue,setting.absoluteInputMin,setting.absoluteInputMax);
+    }
     const float ratio = (encoderAbsoluteValue - setting.absoluteInputMin) / span;
     mapped = setting.outputMin + ratio * (setting.outputMax - setting.outputMin);
   }

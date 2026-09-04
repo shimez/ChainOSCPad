@@ -300,6 +300,7 @@ bool inputValidateDevicePreset(JsonObjectConst root, int expectedDeviceType,
     if (!requiredFields(encoder, required, 10, error)) return false;
     if (!encoder["rotationAddress"].is<const char*>() ||
         !encoder["sendIncrement"].is<bool>() ||
+        (encoder.containsKey("wrapAround") && !encoder["wrapAround"].is<bool>()) ||
         !encoder["absoluteInputMin"].is<float>() ||
         !encoder["absoluteInputMax"].is<float>() ||
         !encoder["incrementScale"].is<float>() ||
@@ -398,6 +399,7 @@ String inputEncoderJson(const EncoderInputSetting& setting,
             inputJsonQuote(setting.rotationAddress) +
             ",\"sendIncrement\":" +
             String(setting.sendIncrement ? "true" : "false") +
+            ",\"wrapAround\":" + String(setting.wrapAround ? "true" : "false") +
             ",\"absoluteInputMin\":" + String(setting.absoluteInputMin, 6) +
             ",\"absoluteInputMax\":" + String(setting.absoluteInputMax, 6) +
             ",\"incrementScale\":" + String(setting.incrementScale, 6) +
@@ -479,6 +481,7 @@ bool inputEncoderFromJson(JsonObjectConst object, EncoderInputSetting& setting,
   }
   setting.rotationAddress = encoder["rotationAddress"].as<const char*>();
   setting.sendIncrement = encoder["sendIncrement"] | false;
+  setting.wrapAround = encoder["wrapAround"] | true;
   setting.absoluteInputMin = encoder["absoluteInputMin"].as<float>();
   setting.absoluteInputMax = encoder["absoluteInputMax"].as<float>();
   setting.incrementScale = encoder["incrementScale"].as<float>();

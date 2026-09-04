@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.0.2 - 2026-09-04
+
+- Add a configurable Encoder absolute-value wrap mode; disabling it clamps at the minimum and maximum
+- Preserve the legacy wrapping behavior when wrapAround is absent from an older Device Preset
+- Align the Wrap around checkbox and label on the same line
+
 ## 1.0.1 - 2026-09-03
 
 - Add the product portal favicon to the normal Web UI and AP Mode captive portal
