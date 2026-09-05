@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add Device Preset v2 support for Encoder Amount and Direction modes
+- Export Encoder presets using the v2 canonical format
+- Support importing compatible Device Preset v1 Encoder presets through v2 migration
+- Align Encoder Amount wrap and clamp behavior with the Device Preset v2 specification
+- Preserve existing Encoder settings when upgrading from earlier firmware storage formats
+
 ## 1.0.2 - 2026-09-04
 
 - Add a configurable Encoder absolute-value wrap mode; disabling it clamps at the minimum and maximum
