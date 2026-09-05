@@ -8,6 +8,7 @@ constexpr char CHAINOSCPAD_SETTINGS_FORMAT[] = "ChainOSCPad-settings";
 constexpr char CHAINOSC_PRESET_FORMAT[] = "ChainOSC-device-preset";
 constexpr char CHAINOSC_LEGACY_PRESET_FORMAT[] = "M5ChainOSC-device-preset";
 constexpr int INPUT_JSON_SCHEMA_VERSION = 1;
+constexpr int DEVICE_PRESET_V2_SCHEMA_VERSION = 2;
 constexpr int CHAIN_KEY_DEVICE_TYPE = 3;
 constexpr int CHAIN_ENCODER_DEVICE_TYPE = 1;
 constexpr int CHAIN_ANGLE_DEVICE_TYPE = 2;
