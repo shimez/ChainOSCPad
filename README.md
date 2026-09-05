@@ -18,7 +18,7 @@ XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマ�
 - Arduino IDE／PlatformIO共通ソース
 - Key 1～12のOSC Address、Press／Release値、Float／Int／String型を設定
 - Encoder回転のAbsolute／Increment、入出力範囲、出力型を設定
-- Encoder ClickのPress／Release複数メッセージとSequenceを設定
+- Encoder PushのPress／Release複数メッセージとSequenceを設定
 - 入力設定をLittleFSへ保存
 - 全体設定をバージョン付きJSONでエクスポート／インポート（Wi-Fi認証情報を除外）
 - Key／EncoderプリセットをChainOSC共通JSON形式でエクスポート／インポート
@@ -61,9 +61,9 @@ Wi-Fi接続後に`http://chainoscpad.local/`を開きます。Wi-Fi／OSC送信�
 - Key 1～12：`Press / Release`または`Sequence`を選択
 - Press／Release：合計最大8メッセージ、0件可。OSC Address、型、値、送信順を設定
 - Sequence：OSC Address、Start、End、Step、Float／Int／String型を設定
-- Encoder Rotation：OSC Address、Absolute／Increment、入力範囲、増分倍率、
-  出力範囲、Float／Int／String型
-- Encoder Click：Keyと同じPress／Release最大8メッセージとSequence
+- Encoder Rotation：OSC Address、回転量／回転方向モード、範囲ステップ数、
+  ループ、出力範囲、Float／Int／String型、方向別の固定値
+- Encoder Push：Keyと同じPress／Release最大8メッセージとSequence
 
 全項目を検証してからLittleFSへ保存し、その場で動作へ反映します。Float／Intで
 数値として解釈できない値や、`/`で始まらないOSC Addressは拒否されます。
@@ -109,12 +109,13 @@ ROWを順番にLOWへ駆動してCOLをプルアップ入力として読みま�
 | 入力         | OSC Address                                   | 型・値                             |
 | ------------ | --------------------------------------------- | ---------------------------------- |
 | Key 1～12    | `/chainoscpad/key/1` ～ `/chainoscpad/key/12` | Float: Press `1.0` / Release `0.0` |
-| Encoder回転  | `/avatar/parameters/Encoder`                  | Float: `0.0`～`0.95`、20段階で循環 |
-| Encoder Push | `/avatar/parameters/EncoderClick`             | Float: Press `1.0` / Release `0.0` |
+| Encoder回転  | `/avatar/parameters/Encoder`                  | Float: `0.0`～`1.0`、両端を含む21位置で循環 |
+| Encoder Push | `/avatar/parameters/EncoderPush`              | Float: Press `1.0` / Release `0.0` |
 
-エンコーダーはChainOSCの既定値と同じく、Absolute入力範囲`0～20`を出力範囲
-`0～1`へマッピングし、20で0へ戻します。したがって整数ステップで実際に送信される値は
-`0.00, 0.05, ... 0.95`です。
+エンコーダーの回転量モードは、論理位置`0～20`を出力範囲`0～1`へマッピングします。
+既定のループ有効時は両端を含む21位置を
+`0.00, 0.05, ... 0.95, 1.00, 0.00`の順で循環します。回転方向モードでは、
+時計回りと反時計回りに設定した固定値を送信します。
 
 ## 旧固定設定ファイル
 

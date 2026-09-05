@@ -8,7 +8,7 @@ permalink: /user-guide/
 
 [English version](../en/user-guide/)
 
-ChainOSCPadは12個のKeyと、回転・クリック対応のEncoderからOSCを送信するデバイスです。XIAO ESP32S3、ESP32C3、ESP32C5、ESP32C6に対応します。
+ChainOSCPadは12個のKeyと、回転・プッシュ対応のEncoderからOSCを送信するデバイスです。XIAO ESP32S3、ESP32C3、ESP32C5、ESP32C6に対応します。
 
 > ChainOSCPadは個人が開発する非公式プロジェクトであり、Seeed Studioその他のハードウェアメーカーによる公式製品ではありません。
 
@@ -36,7 +36,7 @@ ChainOSCPadは12個のKeyと、回転・クリック対応のEncoderからOSCを
 
 Wi-Fi切断中はOSCを送信しません。Sequenceは送信成功時だけ次の値へ進みます。
 
-## 4. KeyとEncoder Click
+## 4. KeyとEncoder Push
 
 ### Press / Release
 
@@ -52,7 +52,10 @@ PressとReleaseを合わせて最大8メッセージまで設定できます。�
 
 ## 5. Encoder回転
 
-Encoderの時計回り／反時計回りに送信するOSC Address、型、値を設定できます。設定画面のEncoderカードから編集します。
+Encoderカードでは回転量モードと回転方向モードを選択できます。回転量モードは
+`0～範囲ステップ数`の論理位置を出力最小値～最大値へ割り当て、範囲のループまたは
+端での停止を選択します。回転方向モードは時計回り／反時計回りに別々の固定値を
+送信します。Float、Int、Stringを利用できます。
 
 ## 6. プリセットとバックアップ
 

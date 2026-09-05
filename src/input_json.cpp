@@ -131,6 +131,112 @@ bool validateRange(JsonObjectConst range, bool legacy, String& error) {
   return true;
 }
 
+bool onlyFields(JsonObjectConst object, const char* const* fields,
+                size_t count) {
+  for (JsonPairConst pair : object) {
+    bool allowed = false;
+    for (size_t index = 0; index < count; ++index)
+      if (strcmp(pair.key().c_str(), fields[index]) == 0) {
+        allowed = true;
+        break;
+      }
+    if (!allowed) return false;
+  }
+  return true;
+}
+
+bool validAmountOutput(float outputMin, float outputMax, int outputType) {
+  if (!isfinite(outputMin) || !isfinite(outputMax) ||
+      !(outputMin < outputMax))
+    return false;
+  const float span = outputMax - outputMin;
+  if (!isfinite(span)) return false;
+  if (outputType != OSC_TYPE_INT) return true;
+  const double roundedMin = round(static_cast<double>(outputMin));
+  const double roundedMax = round(static_cast<double>(outputMax));
+  return roundedMin >= static_cast<double>(INT32_MIN) &&
+         roundedMax <= static_cast<double>(INT32_MAX);
+}
+
+bool validateEncoderV2(JsonObjectConst encoder, String& error) {
+  static const char* const common[] = {"rotationAddress", "rotationMode",
+      "outputType", "pushMode", "press", "release", "sequence"};
+  if (!requiredFields(encoder, common, 7, error)) return false;
+  if (!encoder["rotationAddress"].is<const char*>() ||
+      !encoder["rotationMode"].is<const char*>() ||
+      !encoder["outputType"].is<int>() || !encoder["pushMode"].is<int>() ||
+      !encoder["press"].is<JsonArrayConst>() ||
+      !encoder["release"].is<JsonArrayConst>() ||
+      !encoder["sequence"].is<JsonObjectConst>())
+    return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+  if (!validPresetAddress(encoder["rotationAddress"].as<const char*>(), error))
+    return false;
+  const int outputType = encoder["outputType"].as<int>();
+  if (outputType < OSC_TYPE_FLOAT || outputType > OSC_TYPE_STRING)
+    return fail(error, "E_OSC_TYPE_INVALID");
+  const int pushMode = encoder["pushMode"].as<int>();
+  if (pushMode < INPUT_MODE_PRESS_RELEASE || pushMode > INPUT_MODE_SEQUENCE)
+    return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+
+  const String mode = encoder["rotationMode"].as<const char*>();
+  if (mode == "amount") {
+    static const char* const fields[] = {"rotationAddress", "rotationMode",
+        "rangeSteps", "wrap", "clockwiseIncreases", "outputMin", "outputMax", "outputType",
+        "pushMode", "press", "release", "sequence"};
+    static const char* const required[] = {"rangeSteps", "wrap",
+                                           "clockwiseIncreases", "outputMin",
+                                           "outputMax"};
+    if (!requiredFields(encoder, required, 5, error)) return false;
+    if (!onlyFields(encoder, fields, 12))
+      return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+    if (!encoder["rangeSteps"].is<float>() || !encoder["wrap"].is<bool>() ||
+        !encoder["clockwiseIncreases"].is<bool>() ||
+        !encoder["outputMin"].is<float>() ||
+        !encoder["outputMax"].is<float>())
+      return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+    const float rangeSteps = encoder["rangeSteps"].as<float>();
+    if (!isfinite(rangeSteps) || floorf(rangeSteps) != rangeSteps ||
+        rangeSteps < 1 || rangeSteps > 65535 ||
+        !validAmountOutput(encoder["outputMin"].as<float>(),
+                           encoder["outputMax"].as<float>(), outputType))
+      return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  } else if (mode == "direction") {
+    static const char* const fields[] = {"rotationAddress", "rotationMode",
+        "clockwiseValue", "counterClockwiseValue", "outputType", "pushMode",
+        "press", "release", "sequence"};
+    static const char* const required[] = {"clockwiseValue",
+                                           "counterClockwiseValue"};
+    if (!requiredFields(encoder, required, 2, error)) return false;
+    if (!onlyFields(encoder, fields, 9))
+      return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+    if (outputType == OSC_TYPE_STRING) {
+      if (!encoder["clockwiseValue"].is<const char*>() ||
+          !encoder["counterClockwiseValue"].is<const char*>())
+        return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+      if (String(encoder["clockwiseValue"].as<const char*>()).length() > 128 ||
+          String(encoder["counterClockwiseValue"].as<const char*>()).length() >
+              128)
+        return fail(error, "E_OSC_VALUE_TOO_LONG");
+    } else if (outputType == OSC_TYPE_INT) {
+      if (!encoder["clockwiseValue"].is<int32_t>() ||
+          !encoder["counterClockwiseValue"].is<int32_t>())
+        return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+    } else {
+      if (!encoder["clockwiseValue"].is<float>() ||
+          !encoder["counterClockwiseValue"].is<float>())
+        return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+      if (!isfinite(encoder["clockwiseValue"].as<float>()) ||
+          !isfinite(encoder["counterClockwiseValue"].as<float>()))
+        return fail(error, "E_OSC_FLOAT32_INVALID");
+    }
+  } else {
+    return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  }
+  return validateMessages(encoder["press"], encoder["release"], error) &&
+         validateSequence(encoder["sequence"].as<JsonObjectConst>(), false,
+                          error);
+}
+
 String messageJson(const OscMessageSetting& message) {
   return String("{\"address\":") + inputJsonQuote(message.address) +
          ",\"value\":" + inputJsonQuote(message.value) +
@@ -231,8 +337,7 @@ bool jsonSequence(JsonObjectConst object, SequenceSetting& sequence,
 }
 
 bool jsonButton(JsonObjectConst object, ButtonInputSetting& button,
-                String& error, bool encoderClick = false) {
-  const char* modeKey = encoderClick ? "clickMode" : "mode";
+                String& error, const char* modeKey = "mode") {
   if (object.isNull() || !object[modeKey].is<int>() ||
       !object["press"].is<JsonArrayConst>() ||
       !object["release"].is<JsonArrayConst>()) {
@@ -293,6 +398,9 @@ bool inputValidateDevicePreset(JsonObjectConst root, int expectedDeviceType,
       return fail(error, "E_PRESET_REQUIRED_FIELD_MISSING");
     const JsonObjectConst encoder = root["encoder"].as<JsonObjectConst>();
     if (encoder.isNull()) return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+    if ((root["schemaVersion"] | INPUT_JSON_SCHEMA_VERSION) ==
+        DEVICE_PRESET_V2_SCHEMA_VERSION)
+      return validateEncoderV2(encoder, error);
     static const char* const required[] = {
         "rotationAddress", "sendIncrement", "absoluteInputMin",
         "absoluteInputMax", "incrementScale", "range", "clickMode",
@@ -392,28 +500,39 @@ String inputEncoderJson(const EncoderInputSetting& setting,
               ",\"builtIn\":true";
   } else {
     output += String("\"format\":") + inputJsonQuote(CHAINOSC_PRESET_FORMAT) +
-              ",\"schemaVersion\":1,\"deviceType\":1," +
+              ",\"schemaVersion\":2,\"deviceType\":1," +
               "\"deviceTypeName\":\"Encoder\"";
   }
   output += String(",\"encoder\":{\"rotationAddress\":") +
-            inputJsonQuote(setting.rotationAddress) +
-            ",\"sendIncrement\":" +
-            String(setting.sendIncrement ? "true" : "false") +
-            ",\"wrapAround\":" + String(setting.wrapAround ? "true" : "false") +
-            ",\"absoluteInputMin\":" + String(setting.absoluteInputMin, 6) +
-            ",\"absoluteInputMax\":" + String(setting.absoluteInputMax, 6) +
-            ",\"incrementScale\":" + String(setting.incrementScale, 6) +
-            ",\"range\":{\"outMin\":" + String(setting.outputMin, 6) +
-            ",\"outMax\":" + String(setting.outputMax, 6) +
-            ",\"type\":" + String(static_cast<int>(setting.outputType)) + "}" +
-            ",\"clickMode\":" + String(static_cast<int>(setting.click.mode)) +
+            inputJsonQuote(setting.rotationAddress);
+  if (setting.rotationMode == ENCODER_ROTATION_AMOUNT) {
+    output += String(",\"rotationMode\":\"amount\",\"rangeSteps\":") +
+              String(setting.rangeSteps) + ",\"wrap\":" +
+              String(setting.wrapAround ? "true" : "false") +
+              ",\"clockwiseIncreases\":" +
+              String(setting.clockwiseIncreases ? "true" : "false") +
+              ",\"outputMin\":" + String(setting.outputMin, 7) +
+              ",\"outputMax\":" + String(setting.outputMax, 7);
+  } else {
+    String clockwise = setting.outputType == OSC_TYPE_STRING
+                           ? inputJsonQuote(setting.clockwiseValue)
+                           : setting.clockwiseValue;
+    String counterClockwise = setting.outputType == OSC_TYPE_STRING
+                                  ? inputJsonQuote(setting.counterClockwiseValue)
+                                  : setting.counterClockwiseValue;
+    output += String(",\"rotationMode\":\"direction\",\"clockwiseValue\":") +
+              clockwise + ",\"counterClockwiseValue\":" + counterClockwise;
+  }
+  output += String(",\"outputType\":") +
+            String(static_cast<int>(setting.outputType)) +
+            ",\"pushMode\":" + String(static_cast<int>(setting.push.mode)) +
             ",\"press\":" +
-            messageArrayJson(setting.click.pressMessages,
-                             setting.click.pressMessageCount) +
+            messageArrayJson(setting.push.pressMessages,
+                             setting.push.pressMessageCount) +
             ",\"release\":" +
-            messageArrayJson(setting.click.releaseMessages,
-                             setting.click.releaseMessageCount) +
-            ",\"sequence\":" + sequenceJson(setting.click.sequence) + "}}";
+            messageArrayJson(setting.push.releaseMessages,
+                             setting.push.releaseMessageCount) +
+            ",\"sequence\":" + sequenceJson(setting.push.sequence) + "}}";
   return output;
 }
 
@@ -467,27 +586,87 @@ bool inputEncoderFromJson(JsonObjectConst object, EncoderInputSetting& setting,
     }
   }
   JsonObjectConst encoder = object["encoder"].as<JsonObjectConst>();
-  JsonObjectConst range = encoder["range"].as<JsonObjectConst>();
-  if (encoder.isNull() || range.isNull() ||
-      !encoder["rotationAddress"].is<const char*>() ||
-      encoder["absoluteInputMin"].isNull() ||
-      encoder["absoluteInputMax"].isNull() ||
-      encoder["incrementScale"].isNull() || range["outMin"].isNull() ||
-      range["outMax"].isNull() || !range["type"].is<int>() ||
+  if (encoder.isNull() || !encoder["rotationAddress"].is<const char*>() ||
       !encoder["press"].is<JsonArrayConst>() ||
       !encoder["release"].is<JsonArrayConst>()) {
     error = "Encoder settings are missing.";
     return false;
   }
   setting.rotationAddress = encoder["rotationAddress"].as<const char*>();
-  setting.sendIncrement = encoder["sendIncrement"] | false;
-  setting.wrapAround = encoder["wrapAround"] | true;
-  setting.absoluteInputMin = encoder["absoluteInputMin"].as<float>();
-  setting.absoluteInputMax = encoder["absoluteInputMax"].as<float>();
-  setting.incrementScale = encoder["incrementScale"].as<float>();
-  setting.outputMin = range["outMin"].as<float>();
-  setting.outputMax = range["outMax"].as<float>();
-  setting.outputType = static_cast<OscValueType>(range["type"].as<int>());
-  if (!jsonButton(encoder, setting.click, error, true)) return false;
-  return inputEncoderSettingValid(setting);
+  if (encoder.containsKey("rotationMode")) {
+    const String mode = encoder["rotationMode"].as<const char*>();
+    setting.outputType =
+        static_cast<OscValueType>(encoder["outputType"].as<int>());
+    if (mode == "amount") {
+      setting.rotationMode = ENCODER_ROTATION_AMOUNT;
+      setting.rangeSteps = static_cast<uint16_t>(encoder["rangeSteps"].as<int>());
+      setting.wrapAround = encoder["wrap"].as<bool>();
+      setting.clockwiseIncreases = encoder["clockwiseIncreases"].as<bool>();
+      setting.outputMin = encoder["outputMin"].as<float>();
+      setting.outputMax = encoder["outputMax"].as<float>();
+    } else {
+      setting.rotationMode = ENCODER_ROTATION_DIRECTION;
+      if (setting.outputType == OSC_TYPE_STRING) {
+        setting.clockwiseValue = encoder["clockwiseValue"].as<const char*>();
+        setting.counterClockwiseValue =
+            encoder["counterClockwiseValue"].as<const char*>();
+      } else if (setting.outputType == OSC_TYPE_INT) {
+        setting.clockwiseValue = String(encoder["clockwiseValue"].as<int32_t>());
+        setting.counterClockwiseValue =
+            String(encoder["counterClockwiseValue"].as<int32_t>());
+      } else {
+        setting.clockwiseValue =
+            String(encoder["clockwiseValue"].as<float>(), 7);
+        setting.counterClockwiseValue =
+            String(encoder["counterClockwiseValue"].as<float>(), 7);
+      }
+    }
+  } else {
+    JsonObjectConst range = encoder["range"].as<JsonObjectConst>();
+    if (range.isNull()) { error = "Encoder range is missing."; return false; }
+    const bool increment = encoder["sendIncrement"] | false;
+    const float inputMin = encoder["absoluteInputMin"].as<float>();
+    const float inputMax = encoder["absoluteInputMax"].as<float>();
+    const float scale = encoder["incrementScale"].as<float>();
+    setting.outputMin = range["outMin"].as<float>();
+    setting.outputMax = range["outMax"].as<float>();
+    setting.outputType = static_cast<OscValueType>(range["type"].as<int>());
+    setting.wrapAround = encoder["wrapAround"] | true;
+    setting.clockwiseIncreases = true;
+    if (increment) {
+      setting.rotationMode = ENCODER_ROTATION_DIRECTION;
+      const float low = min(setting.outputMin, setting.outputMax);
+      const float high = max(setting.outputMin, setting.outputMax);
+      const float clockwise = constrain(scale, low, high);
+      const float counterClockwise = constrain(-scale, low, high);
+      if (setting.outputType == OSC_TYPE_INT) {
+        setting.clockwiseValue = String(static_cast<int32_t>(lroundf(clockwise)));
+        setting.counterClockwiseValue = String(static_cast<int32_t>(lroundf(counterClockwise)));
+      } else if (setting.outputType == OSC_TYPE_STRING) {
+        setting.clockwiseValue = String(clockwise, 3);
+        setting.counterClockwiseValue = String(counterClockwise, 3);
+        if (setting.clockwiseValue == "-0.000") setting.clockwiseValue = "0.000";
+        if (setting.counterClockwiseValue == "-0.000") setting.counterClockwiseValue = "0.000";
+      } else {
+        setting.clockwiseValue = String(clockwise, 7);
+        setting.counterClockwiseValue = String(counterClockwise, 7);
+      }
+    } else {
+      const float span = inputMax - inputMin;
+      if (!isfinite(span) || span < 1.0f || span > 65535.0f ||
+          floorf(span) != span) {
+        error = "E_PRESET_DEVICE_SETTING_INVALID";
+        return false;
+      }
+      setting.rotationMode = ENCODER_ROTATION_AMOUNT;
+      setting.rangeSteps = static_cast<uint16_t>(span);
+    }
+  }
+  const bool v2 = encoder.containsKey("rotationMode");
+  if (!jsonButton(encoder, setting.push, error,
+                  v2 ? "pushMode" : "clickMode"))
+    return false;
+  if (!inputEncoderSettingValid(setting))
+    return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  return true;
 }

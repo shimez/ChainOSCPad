@@ -114,6 +114,27 @@
 - [ ] 再起動後もインポート前の設定が維持される
 - [ ] 正常なKey／Encoderプリセットは従来どおりインポート、保存、OSC送信できる
 
+### Device Preset v2 Encoder
+
+- [ ] `canonical/encoder-amount.json`をインポートし、再エクスポートがv2正規フィールドになる
+- [ ] DirectionのFloat／Int／String canonical fixtureをインポートできる
+- [ ] v2 Encoder invalid fixture 19件をすべて拒否し、既存設定が変化しない
+- [ ] v1 Amount presetを整数spanから`rangeSteps`へ移行でき、開始オフセットは破棄される
+- [ ] v1 Amount presetの小数spanを`E_PRESET_DEVICE_SETTING_INVALID`で拒否する
+- [ ] v1 Increment presetを方向別固定値へ移行し、Float／Int／Stringの値がmigration fixtureと一致する
+- [ ] AmountのWrap有効時に`19 → 20 → 0`、逆方向に`0 → 20`となる
+- [ ] AmountのWrap無効時に範囲外の隠れた位置を蓄積せず、端から1ステップで戻れる
+- [ ] `outputMin == outputMax`および`outputMin > outputMax`を`E_PRESET_DEVICE_SETTING_INVALID`で拒否する
+- [ ] `outputMax - outputMin`が有限なfloat32にならない範囲を`E_PRESET_DEVICE_SETTING_INVALID`で拒否する
+- [ ] Int出力へ丸めた`outputMin`／`outputMax`がint32範囲外になる設定を`E_PRESET_DEVICE_SETTING_INVALID`で拒否する
+- [ ] 値の増加方向は`outputMin`／`outputMax`の逆順ではなく`clockwiseIncreases`で切り替わる
+- [ ] AmountのStop端点でさらに範囲外方向へ回した場合、位置が変化しなくても同じ端点値を再送する
+- [ ] Amount Stringが小数点以下3桁を保持し、負のゼロを`0.000`として送信する
+- [ ] Directionはdeltaの大きさによらず符号に対応する値を1回だけ送信する
+- [ ] Preset適用と意味変更で論理位置が0へ戻り、リセット自体ではOSCを送信しない
+- [ ] 再起動後にv2 Encoder設定がLittleFSから復元され、論理位置だけが0へ戻る
+- [ ] 旧storage version 3／4のEncoder設定が読み込まれ、明示的保存後に新形式で復元される
+
 ## 初回セットアップ
 
 - [x] `ChainOSCPad-Setup`が表示される
@@ -192,14 +213,14 @@
 - [x] 正しいSequence設定をインポート／保存でき、Start／End／Stepが自動変更されない
 - [x] Wi-Fi切断中にKeyのSequenceを押してもOSCが送信されず、Sequence値も進まない
 - [x] Wi-Fi再接続後にKeyのSequenceを押すと、切断前の次の値から送信を再開する
-- [x] Wi-Fi切断中にEncoder ClickのSequenceを押してもOSCが送信されず、Sequence値も進まない
-- [x] Wi-Fi再接続後にEncoder ClickのSequenceを押すと、切断前の次の値から送信を再開する
-- [x] Key／Encoder ClickのSequenceをString型で送信できる
+- [x] Wi-Fi切断中にEncoder PushのSequenceを押してもOSCが送信されず、Sequence値も進まない
+- [x] Wi-Fi再接続後にEncoder PushのSequenceを押すと、切断前の次の値から送信を再開する
+- [x] Key／Encoder PushのSequenceをString型で送信できる
 - [x] EncoderをAbsoluteモードで送信できる
 - [x] 出力範囲を`-1`～`1`に設定し、EncoderをIncrementモードで正負方向へ送信できる
 - [x] Encoderの出力範囲とFloat／Int／String型が反映される
 - [x] Encoder PushのPress／Release設定が反映される
-- [x] Encoder Clickの複数メッセージ、0件、並べ替え、Sequenceが動作する
+- [x] Encoder Pushの複数メッセージ、0件、並べ替え、Sequenceが動作する
 - [x] 電源を抜き差ししても入力設定が保持される
 - [x] 設定リセット後、入力設定が初期値へ戻る
 

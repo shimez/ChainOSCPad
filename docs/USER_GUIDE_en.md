@@ -8,7 +8,7 @@ permalink: /en/user-guide/
 
 [日本語版](../../user-guide/)
 
-ChainOSCPad sends OSC from 12 Keys and a rotary Encoder with rotation and click. It supports XIAO ESP32S3, ESP32C3, ESP32C5 and ESP32C6.
+ChainOSCPad sends OSC from 12 Keys and a rotary Encoder with rotation and push. It supports XIAO ESP32S3, ESP32C3, ESP32C5 and ESP32C6.
 
 > ChainOSCPad is an independent, unofficial project and is not an official product of Seeed Studio or any other hardware manufacturer.
 
@@ -26,7 +26,7 @@ The page contains Language, System, Wi-Fi, Backup and Restore, OSC Destination, 
 
 Set the receiver IPv4 address and a UDP port from `1` to `65535`. Messages are not sent while Wi-Fi is disconnected. A Sequence advances only after a successful transmission.
 
-## 4. Keys and Encoder Click
+## 4. Keys and Encoder Push
 
 Press / Release mode supports up to eight messages in total. Each message has an OSC Address, a Float, Int or String type, and a value.
 
@@ -34,7 +34,10 @@ Sequence mode advances from Start by Step and wraps after End. Step cannot be ze
 
 ## 5. Encoder rotation
 
-Configure OSC Address, type and value for clockwise and counterclockwise rotation in the Encoder card.
+Choose Amount or Direction in the Encoder card. Amount maps the inclusive logical
+positions from 0 through Range Steps to Output Min and Output Max, and can wrap or
+stop at either end. Direction sends separate fixed clockwise and counter-clockwise
+values. Float, Int, and String output types are supported.
 
 ## 6. Presets and backup
 
