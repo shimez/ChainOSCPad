@@ -2,11 +2,14 @@
 
 ## Unreleased
 
+## 1.0.3 - 2026-09-06
+
 - Add Device Preset v2 support for Encoder Amount and Direction modes
 - Export Encoder presets using the v2 canonical format
 - Support importing compatible Device Preset v1 Encoder presets through v2 migration
 - Align Encoder Amount wrap and clamp behavior with the Device Preset v2 specification
 - Preserve existing Encoder settings when upgrading from earlier firmware storage formats
+- Refine the Encoder Web UI spacing, accent color, and responsive Amount/Direction field layout
 
 ## 1.0.2 - 2026-09-04
 
