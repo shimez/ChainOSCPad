@@ -22,7 +22,9 @@ uint32_t lastMatrixScanUs = 0;
 uint8_t encoderPreviousState = 0;
 int8_t encoderTransitionAccumulator = 0;
 int32_t encoderLogicalPosition = 0;
+float encoderLegacyAbsoluteValue = 0.0f;
 uint32_t encoderAppliedSettingRevision = 0;
+EncoderSettingsModel encoderAppliedSettingsModel = ENCODER_SETTINGS_V2;
 
 #if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
 struct EncoderDiagnosticEvent {
@@ -143,6 +145,30 @@ bool sendMappedValue(const String& address, float mapped,
   return true;
 }
 
+bool sendLegacyMappedValue(const String& address, float mapped,
+                           OscValueType type) {
+  String text;
+  if (type == OSC_TYPE_INT) {
+    const int32_t value = static_cast<int32_t>(lroundf(mapped));
+    text = String(value);
+    if (!oscReady(address, text)) return false;
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
+                 value);
+  } else if (type == OSC_TYPE_STRING) {
+    text = String(mapped, 3);
+    if (!oscReady(address, text)) return false;
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
+                 text.c_str());
+  } else {
+    text = String(mapped, 3);
+    if (!oscReady(address, text)) return false;
+    OscWiFi.send(networkOscHost().c_str(), networkOscPort(), address.c_str(),
+                 mapped);
+  }
+  logSent(address, text, type);
+  return true;
+}
+
 void sendButton(ButtonInputSetting& setting, bool pressed) {
   if (setting.mode == INPUT_MODE_SEQUENCE) {
     if (!pressed) return;
@@ -208,15 +234,38 @@ void scanMatrix() {
   }
 }
 
-void applyEncoderDetent(int32_t delta) {
-  if (delta == 0) return;
-  const EncoderInputSetting& setting = inputEncoderSetting();
-  const uint32_t revision = inputEncoderSettingRevision();
-  if (encoderAppliedSettingRevision != revision) {
-    encoderAppliedSettingRevision = revision;
-    encoderLogicalPosition = 0;
-    Serial.println("[Encoder] logical position reset after settings change");
+void applyLegacyEncoderDetent(const EncoderInputSetting& setting,
+                              int32_t delta) {
+  const LegacyEncoderRotationSetting& legacy = setting.legacy;
+  float mapped = 0.0f;
+  if (legacy.sendIncrement) {
+    mapped = static_cast<float>(delta) * legacy.incrementScale;
+    mapped = constrain(mapped, min(legacy.outputMin, legacy.outputMax),
+                       max(legacy.outputMin, legacy.outputMax));
+  } else {
+    const float span = legacy.absoluteInputMax - legacy.absoluteInputMin;
+    encoderLegacyAbsoluteValue += static_cast<float>(delta);
+    if (legacy.wrapAround) {
+      while (encoderLegacyAbsoluteValue >= legacy.absoluteInputMax)
+        encoderLegacyAbsoluteValue -= span;
+      while (encoderLegacyAbsoluteValue < legacy.absoluteInputMin)
+        encoderLegacyAbsoluteValue += span;
+    } else {
+      encoderLegacyAbsoluteValue =
+          constrain(encoderLegacyAbsoluteValue, legacy.absoluteInputMin,
+                    legacy.absoluteInputMax);
+    }
+    const float ratio =
+        (encoderLegacyAbsoluteValue - legacy.absoluteInputMin) / span;
+    mapped = legacy.outputMin + ratio * (legacy.outputMax - legacy.outputMin);
   }
+  sendLegacyMappedValue(setting.rotationAddress, mapped, legacy.outputType);
+  Serial.printf("[Encoder] position=%.3f mapped=%.3f mode=legacy-%s\n",
+                encoderLegacyAbsoluteValue, mapped,
+                legacy.sendIncrement ? "increment" : "amount");
+}
+
+void applyV2EncoderDetent(const EncoderInputSetting& setting, int32_t delta) {
   if (setting.rotationMode == ENCODER_ROTATION_DIRECTION) {
     OscMessageSetting message;
     message.address = setting.rotationAddress;
@@ -247,6 +296,31 @@ void applyEncoderDetent(int32_t delta) {
   sendMappedValue(setting.rotationAddress, mapped, setting.outputType);
   Serial.printf("[Encoder] position=%ld mapped=%.7f mode=amount\n",
                 static_cast<long>(encoderLogicalPosition), mapped);
+}
+
+void applyEncoderDetent(int32_t delta) {
+  if (delta == 0) return;
+  const EncoderInputSetting& setting = inputEncoderSetting();
+  const uint32_t revision = inputEncoderSettingRevision();
+  if (encoderAppliedSettingsModel != setting.model) {
+    encoderAppliedSettingsModel = setting.model;
+    encoderAppliedSettingRevision = revision;
+    if (setting.model == ENCODER_SETTINGS_LEGACY)
+      encoderLegacyAbsoluteValue = setting.legacy.absoluteInputMin;
+    else
+      encoderLogicalPosition = 0;
+  }
+  if (setting.model == ENCODER_SETTINGS_LEGACY) {
+    encoderAppliedSettingRevision = revision;
+    applyLegacyEncoderDetent(setting, delta);
+    return;
+  }
+  if (encoderAppliedSettingRevision != revision) {
+    encoderAppliedSettingRevision = revision;
+    encoderLogicalPosition = 0;
+    Serial.println("[Encoder] logical position reset after settings change");
+  }
+  applyV2EncoderDetent(setting, delta);
 }
 
 void pollEncoder() {
@@ -342,6 +416,10 @@ void appSetup() {
   setupPins();
   inputSettingsSetup();
   encoderLogicalPosition = 0;
+  encoderAppliedSettingsModel = inputEncoderSetting().model;
+  if (encoderAppliedSettingsModel == ENCODER_SETTINGS_LEGACY)
+    encoderLegacyAbsoluteValue =
+        inputEncoderSetting().legacy.absoluteInputMin;
   encoderAppliedSettingRevision = inputEncoderSettingRevision();
   networkSetup();
 }
