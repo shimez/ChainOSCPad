@@ -87,6 +87,7 @@ bool validateMessages(JsonVariantConst pressValue,
 }
 
 bool validateSequence(JsonObjectConst object, bool legacy, String& error) {
+  (void)legacy;
   if (object.isNull()) return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
   static const char* const required[] = {"address", "type", "start", "end",
                                          "step"};
@@ -101,7 +102,7 @@ bool validateSequence(JsonObjectConst object, bool legacy, String& error) {
   if (!validPresetAddress(object["address"].as<const char*>(), error))
     return false;
   const int type = object["type"].as<int>();
-  if ((type < OSC_TYPE_FLOAT || type > OSC_TYPE_STRING) && !legacy)
+  if (type < OSC_TYPE_FLOAT || type > OSC_TYPE_STRING)
     return fail(error, "E_OSC_TYPE_INVALID");
   const float start = object["start"].as<float>();
   const float end = object["end"].as<float>();
@@ -592,11 +593,9 @@ bool inputEncoderFromJson(JsonObjectConst object, EncoderInputSetting& setting,
     error = "Encoder settings are missing.";
     return false;
   }
-  // Until the P3 v1 classification is implemented, this existing parser
-  // continues to produce the V2 model for every successful conversion.
-  setting.model = ENCODER_SETTINGS_V2;
   setting.rotationAddress = encoder["rotationAddress"].as<const char*>();
   if (encoder.containsKey("rotationMode")) {
+    setting.model = ENCODER_SETTINGS_V2;
     const String mode = encoder["rotationMode"].as<const char*>();
     setting.outputType =
         static_cast<OscValueType>(encoder["outputType"].as<int>());
@@ -631,38 +630,39 @@ bool inputEncoderFromJson(JsonObjectConst object, EncoderInputSetting& setting,
     const float inputMin = encoder["absoluteInputMin"].as<float>();
     const float inputMax = encoder["absoluteInputMax"].as<float>();
     const float scale = encoder["incrementScale"].as<float>();
-    setting.outputMin = range["outMin"].as<float>();
-    setting.outputMax = range["outMax"].as<float>();
-    setting.outputType = static_cast<OscValueType>(range["type"].as<int>());
-    setting.wrapAround = encoder["wrapAround"] | true;
-    setting.clockwiseIncreases = true;
-    if (increment) {
-      setting.rotationMode = ENCODER_ROTATION_DIRECTION;
-      const float low = min(setting.outputMin, setting.outputMax);
-      const float high = max(setting.outputMin, setting.outputMax);
-      const float clockwise = constrain(scale, low, high);
-      const float counterClockwise = constrain(-scale, low, high);
-      if (setting.outputType == OSC_TYPE_INT) {
-        setting.clockwiseValue = String(static_cast<int32_t>(lroundf(clockwise)));
-        setting.counterClockwiseValue = String(static_cast<int32_t>(lroundf(counterClockwise)));
-      } else if (setting.outputType == OSC_TYPE_STRING) {
-        setting.clockwiseValue = String(clockwise, 3);
-        setting.counterClockwiseValue = String(counterClockwise, 3);
-        if (setting.clockwiseValue == "-0.000") setting.clockwiseValue = "0.000";
-        if (setting.counterClockwiseValue == "-0.000") setting.counterClockwiseValue = "0.000";
-      } else {
-        setting.clockwiseValue = String(clockwise, 7);
-        setting.counterClockwiseValue = String(counterClockwise, 7);
-      }
-    } else {
-      const float span = inputMax - inputMin;
-      if (!isfinite(span) || span < 1.0f || span > 65535.0f ||
-          floorf(span) != span) {
-        error = "E_PRESET_DEVICE_SETTING_INVALID";
-        return false;
-      }
+    const float outputMin = range["outMin"].as<float>();
+    const float outputMax = range["outMax"].as<float>();
+    const OscValueType outputType =
+        static_cast<OscValueType>(range["type"].as<int>());
+    const bool wrap = encoder["wrapAround"] | true;
+
+    // A valid v1 preset that cannot preserve its runtime semantics in the v2
+    // model remains Legacy.  Candidate construction must not round, clamp,
+    // swap, discard an input offset, or reinterpret Increment as Direction.
+    setting.model = ENCODER_SETTINGS_LEGACY;
+    setting.legacy.sendIncrement = increment;
+    setting.legacy.wrapAround = wrap;
+    setting.legacy.absoluteInputMin = inputMin;
+    setting.legacy.absoluteInputMax = inputMax;
+    setting.legacy.incrementScale = scale;
+    setting.legacy.outputMin = outputMin;
+    setting.legacy.outputMax = outputMax;
+    setting.legacy.outputType = outputType;
+
+    const float span = inputMax - inputMin;
+    const bool losslessAmountMigration =
+        !increment && !wrap && inputMin == 0.0f && isfinite(span) &&
+        span >= 1.0f && span <= 65535.0f && floorf(span) == span &&
+        validAmountOutput(outputMin, outputMax, outputType);
+    if (losslessAmountMigration) {
+      setting.model = ENCODER_SETTINGS_V2;
       setting.rotationMode = ENCODER_ROTATION_AMOUNT;
       setting.rangeSteps = static_cast<uint16_t>(span);
+      setting.wrapAround = false;
+      setting.clockwiseIncreases = true;
+      setting.outputMin = outputMin;
+      setting.outputMax = outputMax;
+      setting.outputType = outputType;
     }
   }
   const bool v2 = encoder.containsKey("rotationMode");
