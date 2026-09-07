@@ -537,6 +537,49 @@ String inputEncoderJson(const EncoderInputSetting& setting,
   return output;
 }
 
+bool inputEncoderPresetJson(const EncoderInputSetting& setting,
+                            String& output) {
+  if (!inputEncoderSettingValid(setting)) {
+    output = "";
+    return false;
+  }
+  if (setting.model == ENCODER_SETTINGS_V2) {
+    output = inputEncoderJson(setting, false);
+    return true;
+  }
+  if (setting.model != ENCODER_SETTINGS_LEGACY) {
+    output = "";
+    return false;
+  }
+
+  const LegacyEncoderRotationSetting& legacy = setting.legacy;
+  output = String("{\"format\":") + inputJsonQuote(CHAINOSC_PRESET_FORMAT) +
+           ",\"schemaVersion\":1,\"deviceType\":1," +
+           "\"deviceTypeName\":\"Encoder\",\"encoder\":{" +
+           "\"rotationAddress\":" + inputJsonQuote(setting.rotationAddress) +
+           ",\"sendIncrement\":" +
+           String(legacy.sendIncrement ? "true" : "false") +
+           ",\"wrapAround\":" +
+           String(legacy.wrapAround ? "true" : "false") +
+           ",\"absoluteInputMin\":" +
+           String(legacy.absoluteInputMin, 6) +
+           ",\"absoluteInputMax\":" +
+           String(legacy.absoluteInputMax, 6) +
+           ",\"incrementScale\":" + String(legacy.incrementScale, 6) +
+           ",\"range\":{\"outMin\":" + String(legacy.outputMin, 6) +
+           ",\"outMax\":" + String(legacy.outputMax, 6) +
+           ",\"type\":" + String(static_cast<int>(legacy.outputType)) + "}" +
+           ",\"clickMode\":" + String(static_cast<int>(setting.push.mode)) +
+           ",\"press\":" +
+           messageArrayJson(setting.push.pressMessages,
+                            setting.push.pressMessageCount) +
+           ",\"release\":" +
+           messageArrayJson(setting.push.releaseMessages,
+                            setting.push.releaseMessageCount) +
+           ",\"sequence\":" + sequenceJson(setting.push.sequence) + "}}";
+  return true;
+}
+
 bool inputKeyFromJson(JsonObjectConst object, KeyInputSetting& setting,
                       bool includeIdentity, uint8_t expectedIndex,
                       String& error) {

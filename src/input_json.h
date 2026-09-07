@@ -18,6 +18,7 @@ constexpr int CHAIN_JOYSTICK_DEVICE_TYPE = 5;
 String inputJsonQuote(const String& value);
 String inputKeyJson(const KeyInputSetting& setting, uint8_t index, bool includeIdentity);
 String inputEncoderJson(const EncoderInputSetting& setting, bool includeIdentity);
+bool inputEncoderPresetJson(const EncoderInputSetting& setting, String& output);
 bool inputValidateDevicePreset(JsonObjectConst object, int expectedDeviceType,
                                bool legacy, String& error);
 void inputNormalizeLegacyPresetTypes(JsonObject object, int deviceType);

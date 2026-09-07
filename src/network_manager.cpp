@@ -310,9 +310,15 @@ document.addEventListener('DOMContentLoaded',()=>{const form=document.getElement
     }
     if (index == KEY_COUNT)
     {
+      String preset;
+      if (!inputEncoderPresetJson(inputEncoderSetting(), preset))
+      {
+        server.send(500, "text/plain; charset=utf-8", tr("The Encoder preset could not be exported.", "エンコーダーのプリセットをエクスポートできませんでした。"));
+        return;
+      }
       server.sendHeader("Content-Disposition", "attachment; filename=\"ChainOSC-Encoder-preset.json\"");
       server.sendHeader("Cache-Control", "no-store");
-      server.send(200, "application/json; charset=utf-8", inputEncoderJson(inputEncoderSetting(), false));
+      server.send(200, "application/json; charset=utf-8", preset);
       return;
     }
     server.send(404, "text/plain; charset=utf-8", tr("The selected device was not found.", "選択したデバイスが見つかりません。"));
