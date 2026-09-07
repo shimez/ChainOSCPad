@@ -592,6 +592,9 @@ bool inputEncoderFromJson(JsonObjectConst object, EncoderInputSetting& setting,
     error = "Encoder settings are missing.";
     return false;
   }
+  // Until the P3 v1 classification is implemented, this existing parser
+  // continues to produce the V2 model for every successful conversion.
+  setting.model = ENCODER_SETTINGS_V2;
   setting.rotationAddress = encoder["rotationAddress"].as<const char*>();
   if (encoder.containsKey("rotationMode")) {
     const String mode = encoder["rotationMode"].as<const char*>();

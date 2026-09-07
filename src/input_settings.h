@@ -9,6 +9,10 @@ enum EncoderRotationMode : uint8_t {
   ENCODER_ROTATION_AMOUNT=0,
   ENCODER_ROTATION_DIRECTION=1
 };
+enum EncoderSettingsModel : uint8_t {
+  ENCODER_SETTINGS_LEGACY=0,
+  ENCODER_SETTINGS_V2=1
+};
 
 struct OscMessageSetting { String address; String value; OscValueType type=OSC_TYPE_FLOAT; };
 struct SequenceSetting { String address="/sequence"; OscValueType type=OSC_TYPE_FLOAT; float start=0, end=10, step=1, current=0; };
@@ -20,9 +24,21 @@ struct ButtonInputSetting {
   SequenceSetting sequence;
 };
 struct KeyInputSetting { String displayName; ButtonInputSetting button; };
+struct LegacyEncoderRotationSetting {
+  bool sendIncrement=false;
+  bool wrapAround=true;
+  float absoluteInputMin=0;
+  float absoluteInputMax=20;
+  float incrementScale=.05f;
+  float outputMin=0;
+  float outputMax=1;
+  OscValueType outputType=OSC_TYPE_FLOAT;
+};
 struct EncoderInputSetting {
+  EncoderSettingsModel model=ENCODER_SETTINGS_V2;
   String displayName="Encoder";
   String rotationAddress="/avatar/parameters/Encoder";
+  LegacyEncoderRotationSetting legacy;
   EncoderRotationMode rotationMode=ENCODER_ROTATION_AMOUNT;
   uint16_t rangeSteps=20;
   bool wrapAround=true;
