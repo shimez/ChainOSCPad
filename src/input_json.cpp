@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 namespace {
 bool fail(String& error, const char* code) {
@@ -12,15 +13,39 @@ bool fail(String& error, const char* code) {
 }
 
 bool requiredFields(JsonObjectConst object, const char* const* fields,
-                    size_t count, String& error) {
+                     size_t count, String& error) {
   for (size_t index = 0; index < count; ++index)
     if (!object.containsKey(fields[index]))
       return fail(error, "E_PRESET_REQUIRED_FIELD_MISSING");
   return true;
 }
 
+bool onlyFields(JsonObjectConst object, const char* const* fields,
+                size_t count);
+
+bool validateKeyFields(JsonObjectConst root, JsonObjectConst key,
+                       String& error) {
+  static const char* const rootFields[] = {
+      "format", "schemaVersion", "deviceType", "deviceTypeName", "key"};
+  static const char* const keyFields[] = {"mode", "press", "release",
+                                          "sequence"};
+  static const char* const messageFields[] = {"address", "value", "type"};
+  static const char* const sequenceFields[] = {"address", "type", "start",
+                                               "end", "step"};
+  if (!onlyFields(root, rootFields, 5) || !onlyFields(key, keyFields, 4))
+    return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  for (JsonVariantConst item : key["press"].as<JsonArrayConst>())
+    if (!onlyFields(item.as<JsonObjectConst>(), messageFields, 3))
+      return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  for (JsonVariantConst item : key["release"].as<JsonArrayConst>())
+    if (!onlyFields(item.as<JsonObjectConst>(), messageFields, 3))
+      return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  if (!onlyFields(key["sequence"].as<JsonObjectConst>(), sequenceFields, 5))
+    return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  return true;
+}
+
 bool validPresetAddress(String address, String& error) {
-  address.trim();
   if (address.length() > 192) return fail(error, "E_OSC_ADDRESS_TOO_LONG");
   if (address.isEmpty() || address[0] != '/')
     return fail(error, "E_OSC_ADDRESS_INVALID");
@@ -368,13 +393,15 @@ bool jsonButton(JsonObjectConst object, ButtonInputSetting& button,
 }  // namespace
 
 bool inputValidateDevicePreset(JsonObjectConst root, int expectedDeviceType,
-                               bool legacy, String& error) {
+                                bool legacy, String& error) {
   if (!root.containsKey("deviceTypeName"))
     return fail(error, "E_PRESET_REQUIRED_FIELD_MISSING");
   if (!root["deviceTypeName"].is<const char*>())
     return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
 
   if (expectedDeviceType == CHAIN_KEY_DEVICE_TYPE) {
+    if (!legacy && String(root["deviceTypeName"].as<const char*>()) != "Key")
+      return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
     if (!root.containsKey("key"))
       return fail(error, "E_PRESET_REQUIRED_FIELD_MISSING");
     const JsonObjectConst key = root["key"].as<JsonObjectConst>();
@@ -386,6 +413,7 @@ bool inputValidateDevicePreset(JsonObjectConst root, int expectedDeviceType,
         !key["release"].is<JsonArrayConst>() ||
         !key["sequence"].is<JsonObjectConst>())
       return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+    if (!legacy && !validateKeyFields(root, key, error)) return false;
     const int mode = key["mode"].as<int>();
     if (mode < INPUT_MODE_PRESS_RELEASE || mode > INPUT_MODE_SEQUENCE)
       return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
