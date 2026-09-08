@@ -400,8 +400,6 @@ bool inputValidateDevicePreset(JsonObjectConst root, int expectedDeviceType,
     return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
 
   if (expectedDeviceType == CHAIN_KEY_DEVICE_TYPE) {
-    if (!legacy && String(root["deviceTypeName"].as<const char*>()) != "Key")
-      return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
     if (!root.containsKey("key"))
       return fail(error, "E_PRESET_REQUIRED_FIELD_MISSING");
     const JsonObjectConst key = root["key"].as<JsonObjectConst>();
@@ -414,6 +412,8 @@ bool inputValidateDevicePreset(JsonObjectConst root, int expectedDeviceType,
         !key["sequence"].is<JsonObjectConst>())
       return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
     if (!legacy && !validateKeyFields(root, key, error)) return false;
+    if (!legacy && String(root["deviceTypeName"].as<const char*>()) != "Key")
+      return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
     const int mode = key["mode"].as<int>();
     if (mode < INPUT_MODE_PRESS_RELEASE || mode > INPUT_MODE_SEQUENCE)
       return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
