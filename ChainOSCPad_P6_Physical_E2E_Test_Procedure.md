@@ -1,6 +1,6 @@
 # ChainOSCPad P6 Physical E2E Test Procedure
 
-Status: Draft for physical E2E  
+Status: Physical E2E completed — PASS  
 Phase: P6 — Legacy WebUI / Explicit V2 Migration  
 Date: 2026-09-08
 
@@ -24,11 +24,11 @@ Functional/state testとvisual/interaction testは別々に判定する。画面
 
 - Repository: `shimez/ChainOSCPad`
 - Branch: `main`
-- Inspected HEAD: `281f7b3e9fe4c84cd4f5dee30895f2b914c1011c`
-- Test target: 上記HEADに、`src/network_manager.cpp`のP6 Legacy WebUI／explicit MigrationおよびFixed Encoder UIの未コミット差分を加えた状態
+- Tested implementation commit: `772c7c93c045ab2ced06ad804005acd2d08631ab` (`772c7c9 Implement explicit Device Preset v2 Encoder migration`)
+- Test target: 上記commitで固定されたP6 Legacy WebUI／explicit Migration／Fixed Encoder UI実装
 - Product source: `src/network_manager.cpp`, `src/input_settings.cpp`, `src/input_json.cpp`, `src/main.cpp`
 - Common specification repository HEAD: `9652814bf1ffa867873aeeec36a831f84a6dc312`
-- Guidelines: `<ChainOSC repository>/ChainOSC_WEBUI_DESIGN_GUIDELINES_V1.md`（Independent Review済みDraft）
+- Guidelines: `ChainOSC_WEBUI_DESIGN_GUIDELINES_V1.md`（Independent Review済みDraft。P6 E2E中のwording refinement反映済み）
 
 ## 3. Equipment and Preparation
 
@@ -47,7 +47,7 @@ Functional/state testとvisual/interaction testは別々に判定する。画面
 Common repositoryを次とする。
 
 ```powershell
-$ChainOscRepo = '<path-to-ChainOSC-repository>'
+$ChainOscRepo = '<path-to-ChainOSC>'
 ```
 
 本手順で使用するfixture:
@@ -63,15 +63,15 @@ test-data/device-presets-v2/migration/v1-amount-zero-based-input.json
 
 ### 3.3 Firmware and Serial Monitor
 
-実機boardに対応するenvironmentを選ぶ。例としてXIAO ESP32S3では:
+実機boardに対応するenvironmentを選ぶ。今回の実施環境は **XIAO ESP32C5 / `xiao_esp32c5`**。コマンド例:
 
 ```powershell
-Set-Location -LiteralPath '<path-to-ChainOSCPad-repository>'
-pio run -e xiao_esp32s3 -t upload
-pio device monitor -e xiao_esp32s3
+cd <path-to-ChainOSCPad>
+pio run -e xiao_esp32c5 -t upload
+pio device monitor -e xiao_esp32c5
 ```
 
-他の実在environmentは`xiao_esp32c3`、`xiao_esp32c5`、`xiao_esp32c6`。monitor speedは`platformio.ini`により115200 bpsである。
+他の実在environmentは`xiao_esp32s3`、`xiao_esp32c3`、`xiao_esp32c6`。monitor speedは`platformio.ini`により115200 bpsである。
 
 ### 3.4 WebUI and Import/Export
 
@@ -88,7 +88,18 @@ pio device monitor -e xiao_esp32s3
 - Migration start: `POST /encoder/start-v2-migration`
 - Migration cancel: `POST /encoder/cancel-v2-migration`
 
-### 3.5 Evidence record
+### 3.5 Executed test environment
+
+- Test date: **2026-09-08**
+- Hardware: **XIAO ESP32C5**
+- PlatformIO environment: **`xiao_esp32c5`**
+- Browser: **Microsoft Edge 152**
+- Primary viewport: **1920 x 1080**（responsive testではDevToolsで別viewportも確認）
+- Tested implementation: **`772c7c93c045ab2ced06ad804005acd2d08631ab` (`772c7c9 Implement explicit Device Preset v2 Encoder migration`)**
+- Firmware under test: **上記commitからbuildしたP6 firmware**
+- Overall result: **PASS**
+
+### 3.6 Evidence record
 
 各caseで次を記録する。
 
@@ -117,7 +128,15 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 ## 5. Part A — Functional / State / Persistence E2E
 
-### P6-E2E-LEGACY-001 — v1 Offset Import、Legacy表示、runtime、Export
+### P6-E2E-LEGACY-001
+
+**Executed Result: PASS**
+
+- v1 Offset fixtureをLegacyとしてImportし、Legacy表示、runtime、v1 Export、reboot後のLegacy維持を確認。
+- `/migration/encoder`へLegacy Amount/StringのOSC送信を実機で確認。
+- Serial上でもLegacy Amount runtimeのposition/mapped値の推移を確認。
+
+ — v1 Offset Import、Legacy表示、runtime、Export
 
 **Purpose:** non-lossless v1がPersisted Legacyとなり、P3/P4/P5/P6が接続されていることを確認する。
 
@@ -154,7 +173,14 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 - promotion前のExportは`schemaVersion: 1`。
 - reboot後もLegacy badge、field値、v1 Exportを維持する。
 
-### P6-E2E-LEGACY-SAVE-001 — ordinary SaveはLegacyを維持
+### P6-E2E-LEGACY-SAVE-001
+
+**Executed Result: PASS**
+
+- ordinary Save後もPersisted modelはLegacyのまま。
+- Legacy表示/runtime/v1 Export/reboot persistenceを維持し、auto-promotionしないことを確認。
+
+ — ordinary SaveはLegacyを維持
 
 **Purpose:** Legacy editをexplicit migrationとして扱わないことを確認する。
 
@@ -170,7 +196,15 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 **Expected Result:** Save成功後もLegacy。V2 badgeやcandidate UIは表示されず、Exportはv1、reboot後もLegacy runtimeである。
 
-### P6-E2E-MIG-START-001 — 明示的candidate作成はside-effect-free
+### P6-E2E-MIG-START-001
+
+**Executed Result: PASS**
+
+- explicit actionでcandidateを作成。Save前はLegacy runtimeとv1 Exportを維持。
+- same-boot reload後もvolatile candidateを表示し、migration commandの再実行やpromotionなし。
+- 確認時URLは `http://<device-ip>/` で、migration query/commandは残存しなかった。
+
+ — 明示的candidate作成はside-effect-free
 
 **Purpose:** candidate作成とpromotionの境界を確認する。
 
@@ -195,7 +229,14 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 - reloadはmigration commandを再実行せず、OSC送信やpromotionを発生させない。
 - rebootした場合、未保存candidateは復元されずPersisted Legacyへ戻る。
 
-### P6-E2E-MIG-CANCEL-001 — Candidate Cancel
+### P6-E2E-MIG-CANCEL-001
+
+**Executed Result: PASS**
+
+- candidate編集後にCancelし、Persisted Legacyへ正常復帰。
+- unsaved candidate値はLegacyへ混入せず、Legacy runtime/v1 Exportを維持。
+
+ — Candidate Cancel
 
 **Purpose:** 未保存candidate編集がLegacyへ混入しないことを確認する。
 
@@ -213,7 +254,15 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 **Expected Result:** Candidateは破棄され、編集値はLegacy、runtime、storage、Exportへ反映されない。Cancel自体でOSCを送信しない。
 
-### P6-E2E-MIG-INVALID-001 — invalid Candidate Save
+### P6-E2E-MIG-INVALID-001
+
+**Executed Result: PASS**
+
+- invalid candidate Saveをvalidationで拒否。
+- Persisted Legacyは変更されず、Legacy runtime/v1 Exportを維持。
+- candidateは期待どおり編集可能な状態を維持。
+
+ — invalid Candidate Save
 
 **Purpose:** validation failureではpromotionしないことを確認する。
 
@@ -232,7 +281,15 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 **Expected Result:** Range Steps validationで拒否される。Persisted Legacyは変更されず、保存前candidateの間は編集を継続できる。reboot後はLegacyである。
 
-### P6-E2E-MIG-SAVE-001 — valid SaveだけがV2へpromotion
+### P6-E2E-MIG-SAVE-001
+
+**Executed Result: PASS**
+
+- valid candidate Save/readbackでLegacy→V2 promotionを確認。
+- Serial evidence: `[LittleFS] saved ...`, `[Input settings] Encoder saved`, `[Web] Encoder migration saved`。
+- Save後は通常V2 UIとなり、Export boundaryもv2へ移行。
+
+ — valid SaveだけがV2へpromotion
 
 **Purpose:** P6のpromotion boundaryを実証する。
 
@@ -260,7 +317,15 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 **Expected Result:** product Save/readback成功時だけPersisted V2になる。成功後は通常V2 editorとなり、Exportはv2になる。
 
-### P6-E2E-V2-RUNTIME-001 — promotion後のV2 runtime
+### P6-E2E-V2-RUNTIME-001
+
+**Executed Result: PASS**
+
+- physical EncoderでFloat `/migration/encoder` を確認。
+- CW系列 `0.25 → 0.50 → 0.75 → 1.00 → 0.00` を確認し、V2 inclusive-endpoint Wrapを実証。
+- CCW方向の逆系列も正常。
+
+ — promotion後のV2 runtime
 
 **Purpose:** promotion後にV2 runtimeへ正しく接続されることを代表caseで確認する。
 
@@ -274,7 +339,16 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 **Expected Result:** 時計回りの代表系列はFloatで`0.25, 0.50, 0.75, 1.00, 0.00`。V2 Wrapは最大値を送信してから最小値へ戻る。
 
-### P6-E2E-EXPORT-001 — promotion前後のmodel-aware Export
+### P6-E2E-EXPORT-001
+
+**Executed Result: PASS**
+
+- Persisted Legacy: `schemaVersion: 1`。
+- unsaved Candidate: `schemaVersion: 1`で、Persisted Legacy内容を維持。
+- successful migration Save後: `schemaVersion: 2`。
+- promotion boundaryとExport format boundaryが一致することを確認。
+
+ — promotion前後のmodel-aware Export
 
 **Purpose:** P5 ExportとP6 lifecycleの接続を確認する。
 
@@ -288,7 +362,15 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 各JSONを別名で保存し、schemaVersionだけでなくEncoderのmodel固有fieldも記録する。
 
-### P6-E2E-REBOOT-001 — promotion後のpersistence
+### P6-E2E-REBOOT-001
+
+**Executed Result: PASS**
+
+- promotion後にrebootし、Persisted V2を復元。
+- V2 Amount runtime、v2 Export、設定値を維持。
+- reboot後のlogical position reset後、最初のCWで`0.25`を送信することを確認。
+
+ — promotion後のpersistence
 
 **Purpose:** Persisted V2と設定値がreboot後も維持されることを確認する。
 
@@ -307,6 +389,14 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 ### P6-E2E-CANDIDATE-FRACTIONAL-001
 
+**Executed Result: PASS**
+
+- Amount candidate、transfer可能fieldのcopy、`rangeSteps=0`のinvalid candidate、warningを期待どおり確認。
+- Range Stepsを勝手に補完せずユーザー決定に委ねることを確認。
+- Cancel後、`absoluteInputMax=10.5`を含むLegacy v1を維持。
+
+
+
 **Input:** `v1-amount-fractional-span-input.json`
 
 **Expected candidate:**
@@ -319,6 +409,13 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 - Cancel後は`absoluteInputMax=10.5`を含むLegacy v1が維持される
 
 ### P6-E2E-CANDIDATE-STRING-001
+
+**Executed Result: PASS**
+
+- Direction/String candidate、CCW/CW値、warning、address/Push copyを期待どおり確認。
+- Cancel後もLegacy Incrementとv1 Exportを維持。
+
+
 
 **Input:** `v1-increment-string-input.json`
 
@@ -333,6 +430,14 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 - Cancel後はLegacy Incrementとv1 Exportを維持する
 
 ### P6-E2E-CANDIDATE-WRAP-001
+
+**Executed Result: PASS**
+
+- Amount candidate、Range Steps 20、Wrap true、output field copyを期待どおり確認。
+- Legacy/V2 Wrap semantic difference warningを確認。
+- Cancel後もLegacy half-open Wrapとv1 Exportを維持。
+
+
 
 **Input:** `v1-amount-zero-based-input.json`
 
@@ -350,7 +455,11 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 ## 7. Part B — Fixed Encoder WebUI Visual / Interaction E2E
 
-### P6-UI-OVERALL-001 — Encoder全体構造
+### P6-UI-OVERALL-001
+
+**Executed Result: PASS** — 文言・レイアウトともに問題なし。
+
+ — Encoder全体構造
 
 **Viewport:** 例 `1280 x 800`（800 pxより広いこと）
 
@@ -365,7 +474,11 @@ FAIL時はcurrent badge/model、最後に成功した操作、browser URL、Seri
 
 CSSの22 px等は目視で定規測定せず、必要ならDevTools computed styleとGuidelinesの静的値を照合する。
 
-### P6-UI-SECTIONS-001 — Rotation / Push treatment
+### P6-UI-SECTIONS-001
+
+**Executed Result: PASS** — Rotation / PushのFixed section treatmentに問題なし。
+
+ — Rotation / Push treatment
 
 **Check:**
 
@@ -385,7 +498,11 @@ DevToolsで必要に応じて確認する静的値:
 - Rotation color: `#fd7e14`
 - Push color: `#20c997`
 
-### P6-UI-AMOUNT-001 — wide Amount layout
+### P6-UI-AMOUNT-001
+
+**Executed Result: PASS** — wide Amount layout、field order、label/emojiに問題なし。
+
+ — wide Amount layout
 
 **Preconditions:** Persisted V2 AmountまたはAmount candidate。viewport width > 800 px。
 
@@ -400,7 +517,11 @@ OSCアドレス（full width）
 
 label、`🔄ループする`、`🛑停止する`、回転方向emojiを確認する。
 
-### P6-UI-DIRECTION-001 — wide Direction layoutとfield対応
+### P6-UI-DIRECTION-001
+
+**Executed Result: PASS** — wide Direction layout、field対応に問題なし。
+
+ — wide Direction layoutとfield対応
 
 **Preconditions:** Persisted V2またはcandidateでDirectionを選択。viewport width > 800 px。
 
@@ -414,7 +535,11 @@ OSCアドレス（full width）
 
 反時計回り欄へ`-0.125`、時計回り欄へ`0.375`を入力し、Direction→Amount→Directionと切り替える。値が入れ替わらず保持されることを確認する。保存する場合は実Encoderを両方向へ回し、表示labelと実際の送信値が一致することも確認する。
 
-### P6-UI-LEGACY-001 — Legacy visual state
+### P6-UI-LEGACY-001
+
+**Executed Result: PASS** — Legacy visual stateに問題なし。
+
+ — Legacy visual state
 
 **Preconditions:** Legacy fixtureをImport済み。
 
@@ -428,14 +553,22 @@ OSCアドレス（full width）
 - `v2設定へ移行する`がstatus block最下部
 - button上にhorizontal ruleがない
 
-### P6-UI-CANDIDATE-001 — Candidate visual state
+### P6-UI-CANDIDATE-001
+
+**Executed Result: PASS**
+
+- Candidate visual state、warning、action hierarchyに問題なし。
+- Physical E2E中に見出しを `v2移行候補を確認してください` から **`v2形式への移行に関する注意事項`** へUX wording refinement。
+- ChainOSCPad WebUIとGuidelinesの両方へ反映後、文言・レイアウト・surrounding Fixed UIを再確認しPASS。
+
+ — Candidate visual state
 
 **Preconditions:** P6-E2E-CANDIDATE-WRAP-001またはOFFSET candidate。
 
 **Check:**
 
 - `v2 candidate` badge
-- `v2移行候補を確認してください`がRotation heading直下
+- `v2形式への移行に関する注意事項`がRotation heading直下
 - semantic-difference warning
 - confirmation checkboxが通常のfull-width text inputのように伸びていない
 - `旧形式の設定へ戻る`がgrayの補助action
@@ -445,7 +578,11 @@ OSCアドレス（full width）
 
   `旧形式の絶対値入力オフセットはv2回転量では表現されません`
 
-### P6-UI-V2-001 — Persisted V2 visual state
+### P6-UI-V2-001
+
+**Executed Result: PASS** — Persisted V2 visual stateに問題なし。
+
+ — Persisted V2 visual state
 
 **Preconditions:** P6-E2E-MIG-SAVE-001完了後。
 
@@ -456,7 +593,11 @@ OSCアドレス（full width）
 - candidate warning、confirmation、`旧形式の設定へ戻る`が消えている
 - Rotation／PushのFixed section treatmentが維持される
 
-### P6-UI-SCROLL-001 — transition後の表示位置
+### P6-UI-SCROLL-001
+
+**Executed Result: PASS** — 3 transitionのscroll、one-shot behavior、reload時の非再実行に問題なし。
+
+ — transition後の表示位置
 
 次の3 transitionを個別に確認する。
 
@@ -474,7 +615,11 @@ OSCアドレス（full width）
 
 実装は`sessionStorage`の`focusEncoderMigration`を一度だけ消費する。DevToolsで確認する場合、transition完了後に当該keyが削除されていることを確認する。
 
-### P6-UI-RESPONSIVE-001 — 800 px breakpoint
+### P6-UI-RESPONSIVE-001
+
+**Executed Result: PASS** — breakpoint前後のlayout、field order、overflow/重なりに問題なし。
+
+ — 800 px breakpoint
 
 browser DevToolsのresponsive modeを使用する。
 
@@ -491,7 +636,11 @@ browser DevToolsのresponsive modeを使用する。
 
 両条件でbadge、warning、Migration action、Cancel、label、emojiが欠落せず、horizontal overflowや重なりがないこと。
 
-### P6-UI-SESSION-001 — reload / reboot / stale navigation
+### P6-UI-SESSION-001
+
+**Executed Result: PASS** — reload / reboot / stale navigationの各state transitionに問題なし。
+
+ — reload / reboot / stale navigation
 
 **Steps and Expected Result:**
 
@@ -505,21 +654,41 @@ browser DevToolsのresponsive modeを使用する。
 
 | Gate | Result | Evidence |
 |---|---|---|
-| Legacy Import / UI / reboot | | |
-| Legacy ordinary Save remains Legacy | | |
-| Legacy runtime | | |
-| Candidate creation is side-effect-free | | |
-| Cancel preserves Legacy | | |
-| Invalid Save preserves Legacy | | |
-| Valid Save promotes to V2 | | |
-| V2 runtime after promotion | | |
-| v1→v2 Export boundary | | |
-| V2 reboot persistence | | |
-| Fixed Legacy UI | | |
-| Fixed Candidate UI | | |
-| Fixed V2 UI | | |
-| Amount / Direction layout | | |
-| Responsive behavior | | |
-| Transition scroll / session behavior | | |
+| Legacy Import / UI / reboot | **PASS** | Legacy fixture Import、UI、v1 Export、reboot維持を実機確認 |
+| Legacy ordinary Save remains Legacy | **PASS** | ordinary Save後もLegacy、v1 Export、reboot後Legacy |
+| Legacy runtime | **PASS** | `/migration/encoder` OSCおよびSerialでLegacy Amount runtime確認 |
+| Candidate creation is side-effect-free | **PASS** | Save前Legacy runtime/v1 Export維持、query残存なし |
+| Cancel preserves Legacy | **PASS** | candidate編集破棄、Legacy/runtime/v1 Export維持 |
+| Invalid Save preserves Legacy | **PASS** | validation拒否、Legacy/runtime/v1 Export維持 |
+| Valid Save promotes to V2 | **PASS** | Save/readback成功時のみpromotion、Serial save evidenceあり |
+| V2 runtime after promotion | **PASS** | `0.25→0.50→0.75→1.00→0.00` inclusive Wrapを物理Encoderで確認 |
+| v1→v2 Export boundary | **PASS** | Legacy=v1、unsaved Candidate=v1、promotion後=v2 |
+| V2 reboot persistence | **PASS** | reboot後V2設定/runtime/v2 Export維持 |
+| Fixed Legacy UI | **PASS** | badge/status block/action hierarchyを確認 |
+| Fixed Candidate UI | **PASS** | warning/action hierarchy確認。wording refinement反映後に再確認 |
+| Fixed V2 UI | **PASS** | V2 badge/normal editor、candidate UI消失を確認 |
+| Amount / Direction layout | **PASS** | wide layout、field order/対応を確認 |
+| Responsive behavior | **PASS** | 800 px breakpoint前後を確認 |
+| Transition scroll / session behavior | **PASS** | transition scroll、reload/reboot/stale navigationを確認 |
 
-P6 Physical E2E全体をPASSとするには、Functional / State / PersistenceとFixed WebUI Visual / Interactionの両方がPASSでなければならない。
+### 8.1 Case Count
+
+- Main Functional / State / Persistence: **9 / 9 PASS**
+- Additional Candidate Coverage: **3 / 3 PASS**
+- Fixed Encoder WebUI Visual / Interaction: **10 / 10 PASS**
+- UX wording refinement: **implemented in WebUI + Guidelines and re-verified PASS**
+
+### 8.2 Overall Verdict
+
+**P6 Physical E2E: PASS**
+
+Functional / State / PersistenceとFixed WebUI Visual / Interactionの両方がPASSした。Legacy ImportからExplicit V2 Migration Candidate、Cancel/invalid SaveによるLegacy維持、valid SaveによるV2 promotion、V2 runtime/Export/rebootまでのproduct lifecycleを実機で確認した。
+
+Physical E2E中に発見したMigration Candidate見出しのUX wording issueは、`v2形式への移行に関する注意事項`へ修正し、ChainOSCPad WebUIとChainOSC WebUI Design Guidelines v1の両方へ反映した。修正後の文言・layout・surrounding Fixed UIも再確認しPASSした。
+
+## 9. Post-E2E Handoff Notes
+
+- 本記録の検証対象P6 implementation commitは `772c7c93c045ab2ced06ad804005acd2d08631ab` である。
+- Guidelines v1のReference Implementationは上記commit SHAへ更新する。
+- GuidelinesはReference SHA更新および必要な最終review後にFROZENとする。
+- 本E2E記録自体は、implementation commitとは分けてverification evidenceとしてcommitすることを推奨する。
