@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 1.1.0 - 2026-09-09
+
+### Added
+
+- Add Device Preset v2 support for Encoder Amount, Direction, Push, import, export, validation, and runtime behavior
+- Add an explicit, reviewable migration flow from Legacy Encoder settings to Device Preset v2
+- Show product-wide, 1-based device indexes in WebUI card headers
+
+### Improved
+
+- Preserve valid Device Preset v1 Encoder settings as Legacy when they cannot be converted to v2 without changing behavior
+- Keep migration candidates separate from saved Legacy settings until validation and Save succeed
+- Establish Device Preset v1 Key conformance, including stricter validation and atomic invalid Import behavior
+- Refine the Key and Encoder WebUI and prevent OSC message editors and device cards from overflowing at intermediate widths
+
+### Compatibility
+
+- Device Preset v1 remains the canonical format for Key; no Key migration is required
+- Valid Device Preset v1 Encoder presets remain importable
+- Legacy Encoder settings remain usable and export as Device Preset v1 until explicitly migrated and saved as v2
+
 ## 1.0.3 - 2026-09-06
 
 - Add Device Preset v2 support for Encoder Amount and Direction modes

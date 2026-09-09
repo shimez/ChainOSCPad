@@ -7,7 +7,7 @@ This project's software, website, and documentation are created in collaboration
 XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマトリクスと
 ロータリーエンコーダーを搭載するWi-Fi OSCコントローラーです。
 
-## Version 1.0.3
+## Version 1.1.0
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
@@ -17,17 +17,30 @@ XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマ�
 - Web UI最下段からの全設定削除
 - Arduino IDE／PlatformIO共通ソース
 - Key 1～12のOSC Address、Press／Release値、Float／Int／String型を設定
-- Encoder回転のAbsolute／Increment、入出力範囲、出力型を設定
+- Encoder回転の回転量／回転方向、範囲、ループ／停止、出力型を設定
 - Encoder PushのPress／Release複数メッセージとSequenceを設定
 - 入力設定をLittleFSへ保存
 - 全体設定をバージョン付きJSONでエクスポート／インポート（Wi-Fi認証情報を除外）
-- Key／EncoderプリセットをChainOSC共通JSON形式でエクスポート／インポート
+- Key v1およびEncoder v1/v2プリセットをChainOSC共通JSON形式でエクスポート／インポート
 - Device Preset Import Error Registry v1に準拠したプリセット検証と日英エラーメッセージ
 - Web UIの日本語／英語切り替えと選択言語の保存
 - Web UIのシステム欄にXIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6のモデル名を表示
+- Web UIのDevice cardに`[Key #1]`～`[Key #12]`、`[Encoder #13]`の製品内連番を表示
 
 変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
 実機確認項目は[TESTING.md](TESTING.md)にまとめています。
+
+### Device Preset対応
+
+| Device Type | Preset v1 | Preset v2 | 備考 |
+| --- | --- | --- | --- |
+| Key | 対応 | 非対応 | Device Preset v1が正規形式です。Migrationは不要です。 |
+| Encoder | 対応 | 対応 | v1互換Importとv2 Import／Exportに対応します。 |
+
+有効なEncoder v1 Presetは、動作を変えずに移行できる場合のみv2として取り込みます。
+それ以外はLegacy設定として取り込み、引き続き使用でき、Device Preset v1としてExportできます。
+Legacy設定は通常の保存では暗黙にv2へ変換されません。WebUIで明示的に移行候補を確認し、
+検証と保存に成功した場合にのみv2設定になります。キャンセルまたは保存失敗時はLegacy設定を維持します。
 
 ## 実装済み
 
@@ -190,8 +203,7 @@ Web InstallerをGitHub Pagesへ公開します。Draftの間は現在の公開�
 Microsoft Edgeで接続したXIAOへ書き込めます。チップに合うS3/C3/C5/C6ファームウェアは
 インストーラーが自動選択します。OG／Twitterカードは製品ポータル用です。
 
-C3/C5はPlatformIOとReleaseのビルド対象です。Web Installerへの追加は、実機での
-書き込みと基本動作を確認した後に行います。
+Web InstallerはXIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応します。
 
 ### Web Installerを公開前にテストする
 
