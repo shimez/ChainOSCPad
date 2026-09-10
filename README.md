@@ -25,7 +25,7 @@ XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマ�
 - Device Preset Import Error Registry v1に準拠したプリセット検証と日英エラーメッセージ
 - Web UIの日本語／英語切り替えと選択言語の保存
 - Web UIのシステム欄にXIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6のモデル名を表示
-- Web UIのDevice cardに`[Key #1]`～`[Key #12]`、`[Encoder #13]`の製品内連番を表示
+- Web UIのDevice cardに`[#1 Key]`～`[#12 Key]`、`[#13 Encoder]`の製品内連番を表示
 - XIAO D10のStatus / Activity LEDでネットワーク状態とOSC送信処理を表示
 
 変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
