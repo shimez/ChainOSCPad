@@ -7,7 +7,7 @@ This project's software, website, and documentation are created in collaboration
 XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマトリクスと
 ロータリーエンコーダーを搭載するWi-Fi OSCコントローラーです。
 
-## Version 1.1.1
+## Version 1.2.0
 
 - 初回起動・Wi-Fi接続失敗時の`ChainOSCPad-Setup` APモード
 - ブラウザーからWi-Fi認証情報とOSC送信先を設定
@@ -26,6 +26,7 @@ XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマ�
 - Web UIの日本語／英語切り替えと選択言語の保存
 - Web UIのシステム欄にXIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6のモデル名を表示
 - Web UIのDevice cardに`[Key #1]`～`[Key #12]`、`[Encoder #13]`の製品内連番を表示
+- XIAO D10のStatus / Activity LEDでネットワーク状態とOSC送信処理を表示
 
 変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
 実機確認項目は[TESTING.md](TESTING.md)にまとめています。
@@ -52,6 +53,18 @@ Legacy設定は通常の保存では暗黙にv2へ変換されません。WebUI�
 - エンコーダープッシュのPress／Release送信
 - Wi-Fi切断時の再接続
 - USBシリアルへの入力・OSC送信ログ
+
+### Status / Activity LED
+
+XIAO D10へ接続した単色LEDで、ChainOSCPadの状態を表示します。
+
+- AP Mode：ゆっくり点滅
+- Wi-Fi接続中：2回点滅
+- Wi-Fi接続完了：点灯
+- OSC Activity：短時間消灯
+
+OSC ActivityはChainOSCPadの現在のOSC送信経路が処理を完了したことを示します。
+UDP配送や受信側での受信・処理完了を保証する表示ではありません。
 
 ## 初回設定
 
@@ -102,7 +115,7 @@ OSC送信先、Key 1～12、Encoderは、画面下部の「すべての設定を
 | D7   |           44 |           17 |           20 |           12 | Encoder A                   |
 | D8   |            7 |           19 |            8 |            8 | Encoder B                   |
 | D9   |            8 |           20 |            9 |            9 | Encoder Push                |
-| D10  |            9 |           18 |           10 |           10 | Spare（未使用）             |
+| D10  |            9 |           18 |           10 |           10 | Status / Activity LED       |
 
 エンコーダーの共通端子とPushの反対側はGNDへ接続します。A、B、Pushには
 各対応XIAOの内部プルアップを使用します。

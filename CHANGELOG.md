@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.2.0 - 2026-09-10
+
+### Added
+
+- Add Status / Activity LED support on XIAO D10
+- Add LED patterns for AP mode, STA connection attempts, and Wi-Fi ready state
+- Add OSC transmission activity indication for Key and Encoder operations
+
+### Notes
+
+- OSC Activity indicates completion of the current ChainOSCPad send path; it does not confirm UDP delivery or receiver acknowledgement
+
 ## 1.1.1 - 2026-09-10
 
 ### Changed
