@@ -8,6 +8,7 @@
 #include "config.h"
 #include "input_json.h"
 #include "input_settings.h"
+#include "status_led.h"
 #include "system_settings.h"
 
 namespace
@@ -956,6 +957,7 @@ document.addEventListener('DOMContentLoaded',()=>{['forget-wifi-form','reset-set
       return false;
     }
     installWifiDiagnostics();
+    statusLedSetBase(StatusLedBase::STA_CONNECTING);
     Serial.printf("[WiFi diag] STA begin ssid_length=%u password_length=%u timeout_ms=%lu\n", static_cast<unsigned>(ssid.length()), static_cast<unsigned>(password.length()), static_cast<unsigned long>(WIFI_CONNECT_TIMEOUT_MS));
     WiFi.mode(WIFI_STA);
     logConfiguredNetworkScan();
@@ -994,6 +996,7 @@ document.addEventListener('DOMContentLoaded',()=>{['forget-wifi-form','reset-set
     delay(100);
     WiFi.mode(WIFI_AP);
     apMode = WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASSWORD);
+    statusLedSetBase(StatusLedBase::AP_MODE);
     dns.start(53, "*", WiFi.softAPIP());
     Serial.printf("[WiFi] AP=%s IP=%s\n", WIFI_AP_SSID, WiFi.softAPIP().toString().c_str());
   }
@@ -1048,11 +1051,19 @@ void networkSetup()
   load();
   if (!connectSta())
     startAp();
+  else
+    statusLedSetBase(StatusLedBase::WIFI_READY);
   routes();
   Serial.printf("[OSC] target=%s:%u\n", oscHost.c_str(), oscPort);
 }
 void networkLoop()
 {
+  if (apMode)
+    statusLedSetBase(StatusLedBase::AP_MODE);
+  else if (WiFi.status() == WL_CONNECTED)
+    statusLedSetBase(StatusLedBase::WIFI_READY);
+  else
+    statusLedSetBase(StatusLedBase::STA_CONNECTING);
   if (apMode)
     dns.processNextRequest();
   server.handleClient();

@@ -52,6 +52,21 @@ inline constexpr uint8_t COL_PINS[] = {D4, D5, D6};
 inline constexpr uint8_t ENCODER_A_PIN = D7;
 inline constexpr uint8_t ENCODER_B_PIN = D8;
 inline constexpr uint8_t ENCODER_BUTTON_PIN = D9;
+inline constexpr uint8_t STATUS_LED_PIN = D10;
+
+// The PCB documentation available to the firmware does not establish the
+// LED polarity. Keep it centralized here so physical acceptance can invert it
+// without changing the status/activity state machine.
+inline constexpr uint8_t STATUS_LED_ON_LEVEL = HIGH;
+inline constexpr uint8_t STATUS_LED_OFF_LEVEL = LOW;
+
+inline constexpr uint32_t STATUS_LED_AP_ON_MS = 500;
+inline constexpr uint32_t STATUS_LED_AP_OFF_MS = 500;
+inline constexpr uint32_t STATUS_LED_CONNECTING_ON_MS = 100;
+inline constexpr uint32_t STATUS_LED_CONNECTING_OFF_MS = 100;
+inline constexpr uint32_t STATUS_LED_CONNECTING_GAP_MS = 700;
+inline constexpr uint32_t STATUS_LED_ACTIVITY_OFF_MS = 50;
+inline constexpr uint32_t STATUS_LED_ACTIVITY_BASE_GAP_MS = 50;
 
 inline constexpr uint8_t ROW_COUNT = 4;
 inline constexpr uint8_t COL_COUNT = 3;

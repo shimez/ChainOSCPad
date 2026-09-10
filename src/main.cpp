@@ -6,6 +6,7 @@
 #include "app.h"
 #include "input_settings.h"
 #include "network_manager.h"
+#include "status_led.h"
 
 namespace {
 
@@ -99,6 +100,7 @@ void logSent(const String& address, const String& value,
   Serial.printf("[OSC] %s %s type=%u -> %s:%u\n", address.c_str(),
                 value.c_str(), static_cast<unsigned>(type),
                 networkOscHost().c_str(), networkOscPort());
+  statusLedNotifyOscTxSuccess();
 }
 
 void sendConfiguredMessage(const OscMessageSetting& message) {
@@ -414,6 +416,7 @@ void appSetup() {
   delay(500);
   Serial.printf("\n%s v%s\n", APP_NAME, APP_VERSION);
   setupPins();
+  statusLedBegin();
   inputSettingsSetup();
   encoderLogicalPosition = 0;
   encoderAppliedSettingsModel = inputEncoderSetting().model;
@@ -422,6 +425,7 @@ void appSetup() {
         inputEncoderSetting().legacy.absoluteInputMin;
   encoderAppliedSettingRevision = inputEncoderSettingRevision();
   networkSetup();
+  statusLedUseLoopUpdates();
 }
 
 void appLoop() {
@@ -429,6 +433,7 @@ void appLoop() {
   uint32_t phaseStartUs = micros();
 #endif
   networkLoop();
+  statusLedUpdate();
 #if defined(CHAINOSCPAD_ENCODER_DIAGNOSTICS)
   uint32_t phaseEndUs = micros();
   encoderDiagnosticMaxNetworkUs =
