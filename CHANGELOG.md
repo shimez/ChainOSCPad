@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.1.1 - 2026-09-10
+
+### Changed
+
+- Change Device Card headers to show the product-wide Device Index before the Device Type (`[#N Type]`)
+- Improve the responsive layout for Encoder Push OSC message rows at intermediate desktop widths
+- Fix Key Mode alignment when switching between Press/Release and Sequence modes
+
 ## 1.1.0 - 2026-09-09
 
 ### Added
