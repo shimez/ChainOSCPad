@@ -55,7 +55,7 @@ WindowsでPowerShellまたはコマンドプロンプトを開き、`ipconfig`�
 
 ## 7. KeyにVoice操作を設定する
 
-12個のKeyから1つを選び、「押した時」に次の値を入力します。
+設定画面の「#1 Key」カード（デフォルトのデバイス名は「Key 1」）で、「押した時」に次の値を入力します。
 
 - OSC Address：`/input/Voice`
 - 型：`Int`
@@ -70,7 +70,7 @@ WindowsでPowerShellまたはコマンドプロンプトを開き、`ipconfig`�
 ## 8. 保存して動作を確認する
 
 1. 「すべての設定を保存」を押します。
-2. VRChatが起動していてOSCが有効な状態で、設定したKeyを操作します。
+2. VRChatが起動していてOSCが有効な状態で、「#1 Key」カードのKeyを操作します。
 3. VRChatのVoice入力状態が切り替わることを確認します。Voiceが切り替われば、ChainOSCPadからOSCメッセージを送信できています。
 
 ChainOSCPadはVRChat専用ではありません。VRChat以外のOSC対応アプリケーションでも、送信先、OSC Address、型、値をそのアプリケーションに合わせて設定すれば利用できます。よく使う設定の再利用・共有にはDevice Presetを利用できます。詳しくは[日本語ユーザーガイド](../user-guide/)を参照してください。

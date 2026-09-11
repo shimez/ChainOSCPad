@@ -50,7 +50,7 @@ Open `http://chainoscpad.local/` from the same network. If mDNS is unavailable, 
 
 ## 7. Configure a Voice action on a Key
 
-Choose one of the 12 Keys and enter the following values under **Press**:
+In the **#1 Key** card (the default device name is **Key 1**), enter the following values under **Press**:
 
 - OSC Address: `/input/Voice`
 - Type: `Int`
@@ -65,7 +65,7 @@ Switch to **Release** and enter:
 ## 8. Save and verify the action
 
 1. Select **Save All Settings**.
-2. With VRChat running and OSC enabled, operate the configured Key.
+2. With VRChat running and OSC enabled, operate the Key in the **#1 Key** card.
 3. Confirm that VRChat's Voice input state changes. This confirms that ChainOSCPad sent an OSC message.
 
 ChainOSCPad is not limited to VRChat. For another OSC-compatible application, set the destination, OSC Address, type, and value for that application. Device Preset can be used to reuse and share frequently used settings; see the [English User Guide](../user-guide/) for details.
