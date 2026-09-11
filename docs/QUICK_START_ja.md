@@ -8,16 +8,16 @@ permalink: /quick-start/
 
 [English version](../en/quick-start/)
 
-このガイドでは、ファームウェアのインストールからOSC送信の確認までを案内します。詳しい設定は[日本語ユーザーガイド](../user-guide/)を参照してください。
+このガイドでは、Device Presetを使わずにKeyの設定を手入力し、ChainOSCPadからVRChatへOSCメッセージを送信して動作を確認します。詳しい設定は[日本語ユーザーガイド](../user-guide/)を参照してください。
 
 ## 用意するもの
 
 - 組み立て済みのChainOSCPad
-- XIAO ESP32S3またはXIAO ESP32C6
+- XIAO ESP32S3、ESP32C3、ESP32C5、またはESP32C6
 - データ通信対応USB Type-Cケーブル
 - 対応するWi-Fi（ESP32C5は2.4 GHz／5 GHz、ESP32S3／C3／C6は2.4 GHz）
 - デスクトップ版ChromeまたはEdge
-- OSCを受信するPCまたはアプリケーション
+- VRChatを実行するPC
 
 ## 1. ファームウェアを書き込む
 
@@ -36,12 +36,43 @@ permalink: /quick-start/
 4. 使用するWi-Fiを選択し、パスワードを保存します。ESP32C5は2.4 GHz／
    5 GHz、ESP32S3／C3／C6は2.4 GHzに対応します。
 
-## 3. OSC送信先を設定する
+## 3. VRChatでOSCを有効にする
 
-同じネットワークから`http://chainoscpad.local/`を開きます。OSC送信先のIPアドレスとUDPポートを入力し、画面下部の保存ボタンで全体を保存します。
+VRChatを起動し、リングメニュー → オプション → OSC → 有効に設定します。
 
-## 4. 動作を確認する
+## 4. VRChatを実行しているPCのIPv4アドレスを確認する
 
-KeyまたはEncoderを操作し、設定したOSCアドレスと値が受信側へ届くことを確認します。
+WindowsでPowerShellまたはコマンドプロンプトを開き、`ipconfig`を実行します。ChainOSCPadと同じネットワークに接続しているWi-FiまたはEthernetアダプターのIPv4アドレスを確認してください。VPNや仮想アダプターではなく、実際に接続中のアダプターを選びます。
+
+## 5. 設定画面を開く
+
+同じネットワークから`http://chainoscpad.local/`を開きます。開けない場合はシリアルログに表示されるIPアドレスをブラウザーで開いてください。
+
+## 6. OSC送信先を設定する
+
+1. 「OSC送信先の設定」の「IPアドレス」に、VRChatを実行しているPCのIPv4アドレスを入力します。
+2. 「UDPポート」に`9000`を入力します。
+
+## 7. KeyにVoice操作を設定する
+
+12個のKeyから1つを選び、「押した時」に次の値を入力します。
+
+- OSC Address：`/input/Voice`
+- 型：`Int`
+- 値：`1`
+
+「離した時」に切り替えて、次の値を入力します。
+
+- OSC Address：`/input/Voice`
+- 型：`Int`
+- 値：`0`
+
+## 8. 保存して動作を確認する
+
+1. 「すべての設定を保存」を押します。
+2. VRChatが起動していてOSCが有効な状態で、設定したKeyを操作します。
+3. VRChatのVoice入力状態が切り替わることを確認します。Voiceが切り替われば、ChainOSCPadからOSCメッセージを送信できています。
+
+ChainOSCPadはVRChat専用ではありません。VRChat以外のOSC対応アプリケーションでも、送信先、OSC Address、型、値をそのアプリケーションに合わせて設定すれば利用できます。よく使う設定の再利用・共有にはDevice Presetを利用できます。詳しくは[日本語ユーザーガイド](../user-guide/)を参照してください。
 
 [ChainOSCPadポータルへ戻る](../)

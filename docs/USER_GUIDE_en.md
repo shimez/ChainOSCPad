@@ -43,6 +43,8 @@ values. Float, Int, and String output types are supported.
 
 Use each card's `…` menu to export or import a Key or Encoder preset as JSON. Use Backup and Restore for the complete device settings. Wi-Fi credentials are not included in the full-settings JSON.
 
+Presets can be shared with other ChainOSC devices when they use the same device type. [ChainOSC Device Presets](https://github.com/shimez/ChainOSC/tree/main/presets) provides sample device presets for VRChat and other uses. Download a JSON file and import it to use the preset.
+
 Export important settings before reinstalling or erasing firmware. The same `…` menu can reset an individual Key or Encoder; the Wi-Fi section can erase stored Wi-Fi settings.
 
 [Back to the ChainOSCPad portal](../../)
