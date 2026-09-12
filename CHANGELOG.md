@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.2.1 - 2026-09-13
+
+### Changed
+
+- Align the Legacy Encoder rotation form with the established ChainOSCmini three-column layout
+- Show the Legacy wrap behavior as a checkbox and hide Absolute-only fields in Increment mode while preserving the remaining desktop field positions
+- Hide Amount-only Range Steps and Increase Direction fields when an Increment setting is shown as a v2 Direction migration candidate
+
 ## 1.2.0 - 2026-09-10
 
 ### Added

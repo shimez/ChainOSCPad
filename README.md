@@ -6,11 +6,11 @@ XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマ�
 
 ## 現在のバージョン
 
-### v1.2.0
+### v1.2.1
 
-- XIAO D10のStatus / Activity LEDに対応
-- AP Mode、Wi-Fi接続中、Wi-Fi接続完了、OSC Activityの状態表示を追加
-- KeyおよびEncoderのOSC送信処理とLED表示を連携
+- Legacy Encoderの回転設定を3列レイアウトへ整理
+- 増分モードではAbsolute専用項目を非表示にし、他の項目の表示位置を維持
+- 増分設定から生成したv2回転方向候補で、Amount専用項目を非表示化
 
 詳細な変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
 
