@@ -201,19 +201,23 @@ bool validateEncoderV2(JsonObjectConst encoder, String& error) {
   if (outputType < OSC_TYPE_FLOAT || outputType > OSC_TYPE_STRING)
     return fail(error, "E_OSC_TYPE_INVALID");
   const int pushMode = encoder["pushMode"].as<int>();
-  if (pushMode < INPUT_MODE_PRESS_RELEASE || pushMode > INPUT_MODE_SEQUENCE)
+  if (pushMode < INPUT_MODE_PRESS_RELEASE || pushMode > INPUT_MODE_ROTATION_RESET)
+    return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  if (pushMode == INPUT_MODE_ROTATION_RESET && !encoder.containsKey("resetValue"))
+    return fail(error, "E_PRESET_REQUIRED_FIELD_MISSING");
+  if (pushMode != INPUT_MODE_ROTATION_RESET && encoder.containsKey("resetValue"))
     return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
 
   const String mode = encoder["rotationMode"].as<const char*>();
   if (mode == "amount") {
     static const char* const fields[] = {"rotationAddress", "rotationMode",
         "rangeSteps", "wrap", "clockwiseIncreases", "outputMin", "outputMax", "outputType",
-        "pushMode", "press", "release", "sequence"};
+        "pushMode", "resetValue", "press", "release", "sequence"};
     static const char* const required[] = {"rangeSteps", "wrap",
                                            "clockwiseIncreases", "outputMin",
                                            "outputMax"};
     if (!requiredFields(encoder, required, 5, error)) return false;
-    if (!onlyFields(encoder, fields, 12))
+    if (!onlyFields(encoder, fields, 13))
       return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
     if (!encoder["rangeSteps"].is<float>() || !encoder["wrap"].is<bool>() ||
         !encoder["clockwiseIncreases"].is<bool>() ||
@@ -229,11 +233,11 @@ bool validateEncoderV2(JsonObjectConst encoder, String& error) {
   } else if (mode == "direction") {
     static const char* const fields[] = {"rotationAddress", "rotationMode",
         "clockwiseValue", "counterClockwiseValue", "outputType", "pushMode",
-        "press", "release", "sequence"};
+        "resetValue", "press", "release", "sequence"};
     static const char* const required[] = {"clockwiseValue",
                                            "counterClockwiseValue"};
     if (!requiredFields(encoder, required, 2, error)) return false;
-    if (!onlyFields(encoder, fields, 9))
+    if (!onlyFields(encoder, fields, 10))
       return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
     if (outputType == OSC_TYPE_STRING) {
       if (!encoder["clockwiseValue"].is<const char*>() ||
@@ -257,6 +261,29 @@ bool validateEncoderV2(JsonObjectConst encoder, String& error) {
     }
   } else {
     return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+  }
+  if (pushMode == INPUT_MODE_ROTATION_RESET) {
+    if (mode == "amount") {
+      if (!encoder["resetValue"].is<float>())
+        return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+      const float reset = encoder["resetValue"].as<float>();
+      if (!isfinite(reset) || reset < encoder["outputMin"].as<float>() ||
+          reset > encoder["outputMax"].as<float>())
+        return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+    } else if (outputType == OSC_TYPE_STRING) {
+      if (!encoder["resetValue"].is<const char*>())
+        return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+      if (String(encoder["resetValue"].as<const char*>()).length() > 128)
+        return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+    } else if (outputType == OSC_TYPE_INT) {
+      if (!encoder["resetValue"].is<int32_t>())
+        return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+    } else {
+      if (!encoder["resetValue"].is<float>())
+        return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
+      if (!isfinite(encoder["resetValue"].as<float>()))
+        return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
+    }
   }
   return validateMessages(encoder["press"], encoder["release"], error) &&
          validateSequence(encoder["sequence"].as<JsonObjectConst>(), false,
@@ -363,7 +390,8 @@ bool jsonSequence(JsonObjectConst object, SequenceSetting& sequence,
 }
 
 bool jsonButton(JsonObjectConst object, ButtonInputSetting& button,
-                String& error, const char* modeKey = "mode") {
+                String& error, const char* modeKey = "mode",
+                bool encoder = false) {
   if (object.isNull() || !object[modeKey].is<int>() ||
       !object["press"].is<JsonArrayConst>() ||
       !object["release"].is<JsonArrayConst>()) {
@@ -373,7 +401,8 @@ bool jsonButton(JsonObjectConst object, ButtonInputSetting& button,
   const int mode = object[modeKey].as<int>();
   JsonArrayConst press = object["press"].as<JsonArrayConst>();
   JsonArrayConst release = object["release"].as<JsonArrayConst>();
-  if (mode < INPUT_MODE_PRESS_RELEASE || mode > INPUT_MODE_SEQUENCE ||
+  if (mode < INPUT_MODE_PRESS_RELEASE ||
+      mode > (encoder ? INPUT_MODE_ROTATION_RESET : INPUT_MODE_SEQUENCE) ||
       press.size() + release.size() > MAX_OSC_MESSAGES) {
     error = "Button mode or message count is invalid.";
     return false;
@@ -388,7 +417,7 @@ bool jsonButton(JsonObjectConst object, ButtonInputSetting& button,
   for (JsonObjectConst message : release)
     if (!jsonMessage(message, button.releaseMessages[index++], error)) return false;
   return jsonSequence(object["sequence"].as<JsonObjectConst>(), button.sequence,
-                      error) && inputButtonSettingValid(button);
+                      error) && (encoder || inputButtonSettingValid(button));
 }
 }  // namespace
 
@@ -554,7 +583,16 @@ String inputEncoderJson(const EncoderInputSetting& setting,
   }
   output += String(",\"outputType\":") +
             String(static_cast<int>(setting.outputType)) +
-            ",\"pushMode\":" + String(static_cast<int>(setting.push.mode)) +
+            ",\"pushMode\":" + String(static_cast<int>(setting.push.mode));
+  if (setting.push.mode == INPUT_MODE_ROTATION_RESET) {
+    output += ",\"resetValue\":";
+    output += setting.rotationMode == ENCODER_ROTATION_AMOUNT
+                  ? setting.resetValue
+                  : (setting.outputType == OSC_TYPE_STRING
+                         ? inputJsonQuote(setting.resetValue)
+                         : setting.resetValue);
+  }
+  output +=
             ",\"press\":" +
             messageArrayJson(setting.push.pressMessages,
                              setting.push.pressMessageCount) +
@@ -738,8 +776,19 @@ bool inputEncoderFromJson(JsonObjectConst object, EncoderInputSetting& setting,
   }
   const bool v2 = encoder.containsKey("rotationMode");
   if (!jsonButton(encoder, setting.push, error,
-                  v2 ? "pushMode" : "clickMode"))
+                  v2 ? "pushMode" : "clickMode", v2))
     return false;
+  if (v2 && setting.push.mode == INPUT_MODE_ROTATION_RESET) {
+    if (setting.rotationMode == ENCODER_ROTATION_AMOUNT)
+      setting.resetValue = String(encoder["resetValue"].as<float>(), 7);
+    else if (setting.outputType == OSC_TYPE_STRING)
+      setting.resetValue = encoder["resetValue"].as<const char*>();
+    else if (setting.outputType == OSC_TYPE_INT)
+      setting.resetValue = String(encoder["resetValue"].as<int32_t>());
+    else
+      setting.resetValue = String(encoder["resetValue"].as<float>(), 7);
+    setting.resetValueConfigured = true;
+  }
   if (!inputEncoderSettingValid(setting))
     return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
   return true;

@@ -4,7 +4,7 @@
 
 constexpr uint8_t MAX_OSC_MESSAGES = 8;
 enum OscValueType : uint8_t { OSC_TYPE_FLOAT=0, OSC_TYPE_INT=1, OSC_TYPE_STRING=2 };
-enum InputMode : uint8_t { INPUT_MODE_PRESS_RELEASE=0, INPUT_MODE_SEQUENCE=1 };
+enum InputMode : uint8_t { INPUT_MODE_PRESS_RELEASE=0, INPUT_MODE_SEQUENCE=1, INPUT_MODE_ROTATION_RESET=2 };
 enum EncoderRotationMode : uint8_t {
   ENCODER_ROTATION_AMOUNT=0,
   ENCODER_ROTATION_DIRECTION=1
@@ -47,6 +47,8 @@ struct EncoderInputSetting {
   OscValueType outputType=OSC_TYPE_FLOAT;
   String clockwiseValue="0.05";
   String counterClockwiseValue="-0.05";
+  String resetValue="0.5";
+  bool resetValueConfigured=false;
   ButtonInputSetting push;
 };
 
@@ -63,6 +65,7 @@ bool inputOscMessageValid(const OscMessageSetting& message);
 bool inputSequenceSettingValid(const SequenceSetting& sequence);
 bool inputButtonSettingValid(const ButtonInputSetting& setting);
 bool inputEncoderSettingValid(const EncoderInputSetting& encoder);
+bool inputEncoderRotationResetValueValid(const EncoderInputSetting& encoder);
 uint32_t inputEncoderSettingRevision();
 void inputEncoderResetRuntimeState();
 bool inputParseFloat(const String& text,float& value);

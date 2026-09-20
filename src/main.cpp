@@ -23,6 +23,9 @@ uint32_t lastMatrixScanUs = 0;
 uint8_t encoderPreviousState = 0;
 int8_t encoderTransitionAccumulator = 0;
 int32_t encoderLogicalPosition = 0;
+bool encoderPendingReset = false;
+int32_t encoderPendingLowerGrid = 0;
+int32_t encoderPendingUpperGrid = 0;
 float encoderLegacyAbsoluteValue = 0.0f;
 uint32_t encoderAppliedSettingRevision = 0;
 EncoderSettingsModel encoderAppliedSettingsModel = ENCODER_SETTINGS_V2;
@@ -281,7 +284,11 @@ void applyV2EncoderDetent(const EncoderInputSetting& setting, int32_t delta) {
   }
   const int32_t rangeSteps = setting.rangeSteps;
   const int32_t amountDelta = setting.clockwiseIncreases ? delta : -delta;
-  int64_t next = static_cast<int64_t>(encoderLogicalPosition) + amountDelta;
+  int64_t next;
+  if(encoderPendingReset){
+    next=amountDelta>0?static_cast<int64_t>(encoderPendingUpperGrid)+(amountDelta-1):static_cast<int64_t>(encoderPendingLowerGrid)-(static_cast<int64_t>(-amountDelta)-1);
+    encoderPendingReset=false;
+  }else next=static_cast<int64_t>(encoderLogicalPosition)+amountDelta;
   if (setting.wrapAround) {
     const int64_t positions = static_cast<int64_t>(rangeSteps) + 1;
     next %= positions;
@@ -300,6 +307,18 @@ void applyV2EncoderDetent(const EncoderInputSetting& setting, int32_t delta) {
                 static_cast<long>(encoderLogicalPosition), mapped);
 }
 
+void applyEncoderRotationReset(EncoderInputSetting& setting){
+  if(setting.model!=ENCODER_SETTINGS_V2||setting.push.mode!=INPUT_MODE_ROTATION_RESET||!inputEncoderRotationResetValueValid(setting))return;
+  if(setting.rotationMode==ENCODER_ROTATION_DIRECTION){OscMessageSetting message;message.address=setting.rotationAddress;message.type=setting.outputType;message.value=setting.resetValue;sendConfiguredMessage(message);return;}
+  float reset;if(!inputParseFloat(setting.resetValue,reset))return;
+  const float p=(reset-setting.outputMin)/(setting.outputMax-setting.outputMin)*setting.rangeSteps;
+  const float tolerance=min(0.25f,8.0f*1.1920929e-7f*max(1.0f,static_cast<float>(setting.rangeSteps)));
+  const float rounded=roundf(p);
+  if(fabsf(p-rounded)<=tolerance){encoderLogicalPosition=static_cast<int32_t>(rounded);encoderPendingReset=false;}
+  else{encoderPendingLowerGrid=static_cast<int32_t>(floorf(p));encoderPendingUpperGrid=static_cast<int32_t>(ceilf(p));encoderPendingReset=true;}
+  sendMappedValue(setting.rotationAddress,reset,setting.outputType);
+}
+
 void applyEncoderDetent(int32_t delta) {
   if (delta == 0) return;
   const EncoderInputSetting& setting = inputEncoderSetting();
@@ -310,7 +329,7 @@ void applyEncoderDetent(int32_t delta) {
     if (setting.model == ENCODER_SETTINGS_LEGACY)
       encoderLegacyAbsoluteValue = setting.legacy.absoluteInputMin;
     else
-      encoderLogicalPosition = 0;
+      encoderLogicalPosition = 0, encoderPendingReset = false;
   }
   if (setting.model == ENCODER_SETTINGS_LEGACY) {
     encoderAppliedSettingRevision = revision;
@@ -320,6 +339,7 @@ void applyEncoderDetent(int32_t delta) {
   if (encoderAppliedSettingRevision != revision) {
     encoderAppliedSettingRevision = revision;
     encoderLogicalPosition = 0;
+    encoderPendingReset = false;
     Serial.println("[Encoder] logical position reset after settings change");
   }
   applyV2EncoderDetent(setting, delta);
@@ -379,7 +399,7 @@ void pollEncoder() {
   if (updateDebounce(encoderButton, pressed, ENCODER_BUTTON_DEBOUNCE_MS,
                      millis())) {
     EncoderInputSetting& setting = inputEncoderSetting();
-    sendButton(setting.push, encoderButton.stable);
+    if(setting.model==ENCODER_SETTINGS_V2&&setting.push.mode==INPUT_MODE_ROTATION_RESET){if(encoderButton.stable)applyEncoderRotationReset(setting);}else sendButton(setting.push, encoderButton.stable);
     Serial.printf("[Encoder push] %s\n",
                   encoderButton.stable ? "pressed" : "released");
   }
