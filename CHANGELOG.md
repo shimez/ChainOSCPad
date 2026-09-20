@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.2.2 - 2026-09-20
+
+### Added
+
+- Add Encoder v2 Rotation Reset to reset the rotation state to a configured value from an Encoder push
+
 ## 1.2.1 - 2026-09-13
 
 ### Changed

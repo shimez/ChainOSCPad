@@ -1,6 +1,6 @@
 # ChainOSCPad Web Installer
 
-現在の公開版は`1.2.1`です。
+現在の公開版は`1.2.2`です。
 
 変更履歴はリポジトリの `CHANGELOG.md` を参照してください。
 
