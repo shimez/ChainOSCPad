@@ -883,7 +883,7 @@ document.addEventListener('DOMContentLoaded',()=>{['forget-wifi-form','reset-set
     return h;
   }
   String inputsSuffix() { return String("</div>") + inputGuide() + "<style>.input-guide{background:#fff!important;color:#10213b!important;border-color:#d9e0e9!important}.guide-key,.guide-encoder{color:#27364a!important;background:#f8fafc!important}.guide-key[aria-pressed=true],.guide-encoder[aria-pressed=true]{border-color:#245fd7!important;color:#123c91!important;background:#dbe8ff!important}.guide-current p{color:#68758a!important}.guide-current-name,.guide-current code{color:#10213b!important}.danger-zone{margin-top:28px;border-left:0}.danger-zone form{margin:0}.danger-zone button{display:block;width:100%;margin:0;padding:12px;border:0;border-radius:6px;background:#dc3545;color:#fff;font:inherit;font-size:16px}</style></div><div class=save-bar><button class=save type=submit>" + tr("Save All Settings", "すべての設定を保存") + "</button></div></form><div class='card danger-zone'><form id='reset-settings-form' method='post' action='/reset'><button type='submit'>" + tr("Delete All Settings", "すべての設定を削除") + "</button></form></div></main></body></html>"; }
-  void sendInputsPage(const String &msg = "", bool err = false, int status = 200)
+  void sendInputsPage(const String &msg = "", bool err = false, int status = 200, bool safeHistory = false)
   {
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
     server.sendHeader("Cache-Control", "no-store");
@@ -891,6 +891,9 @@ document.addEventListener('DOMContentLoaded',()=>{['forget-wifi-form','reset-set
     auto sendChunk = [](String chunk) -> bool
     {if(!server.client().connected())return false;server.sendContent(chunk);chunk.remove(0);yield();return server.client().connected()!=0; };
     if (!sendChunk(inputsPrefix(msg, err)))
+      return;
+    if (safeHistory &&
+        !sendChunk("<script>history.replaceState(null,'','/')</script>"))
       return;
     for (uint8_t i = 0; i < KEY_COUNT; ++i)
       if (!sendChunk(keyCard(i)))
@@ -1063,7 +1066,7 @@ document.addEventListener('DOMContentLoaded',()=>{['forget-wifi-form','reset-set
     server.on("/save-wifi", HTTP_POST, []
               {String s=server.arg("ssid"),pw=server.arg("password");s.trim();if(s.isEmpty()||s.length()>32||pw.length()>64||!saveWifi(s,pw)){sendProvisioningPage(tr("Check the entered Wi-Fi settings.","Wi-Fiの入力内容を確認してください。"),true,400);return;}sendProvisioningPage(tr("Wi-Fi settings saved. Restarting.","Wi-Fi設定を保存しました。再起動します。"));scheduleRestart(); });
     server.on("/forget-wifi", HTTP_POST, []
-              {const bool ok=systemSettingsClearWifi();if(!ok){const String message=tr("Could not delete WiFi settings.","Wi-Fi設定を削除できませんでした。");if(server.hasArg("ajax"))server.send(500,"text/plain; charset=utf-8",message);else sendInputsPage(message,true,500);return;}ssid="";password="";const String message=tr("WiFi settings deleted. Restarting in setup mode.","Wi-Fi設定を削除しました。設定モードで再起動します。");if(server.hasArg("ajax"))server.send(200,"text/plain; charset=utf-8",message);else sendInputsPage(message);scheduleRestart(); });
+              {const bool ok=systemSettingsClearWifi();if(!ok){const String message=tr("Could not delete WiFi settings.","Wi-Fi設定を削除できませんでした。");if(server.hasArg("ajax"))server.send(500,"text/plain; charset=utf-8",message);else sendInputsPage(message,true,500);return;}ssid="";password="";const String message=tr("WiFi settings deleted. Restarting in setup mode.","Wi-Fi設定を削除しました。設定モードで再起動します。");if(server.hasArg("ajax"))server.send(200,"text/plain; charset=utf-8",message);else sendInputsPage(message,false,200,true);scheduleRestart(); });
     server.on("/reset", HTTP_POST, []
               {bool ok=systemSettingsClearAll();ok=inputSettingsReset()&&ok;String message=ok?tr("Settings deleted. Restarting.","設定を削除しました。再起動します。"):tr("Could not delete settings.","削除できませんでした。");if(ok)encoderMigrationCandidateActive=false;if(server.hasArg("ajax"))server.send(ok?200:500,"text/plain; charset=utf-8",message);else sendInputsPage(message,!ok,ok?200:500);if(ok)scheduleRestart(); });
     server.onNotFound([]()
