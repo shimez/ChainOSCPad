@@ -6,11 +6,10 @@ XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマ�
 
 ## 現在のバージョン
 
-### v1.2.1
+### v1.2.3
 
-- Legacy Encoderの回転設定を3列レイアウトへ整理
-- 増分モードではAbsolute専用項目を非表示にし、他の項目の表示位置を維持
-- 増分設定から生成したv2回転方向候補で、Amount専用項目を非表示化
+- Key SequenceのLoop／Ping-Pongモードに対応
+- Wi-Fi設定の削除後、古いタブを更新しても新しい設定が削除されないよう改善
 
 詳細な変更履歴は[CHANGELOG.md](CHANGELOG.md)を参照してください。
 
@@ -19,7 +18,7 @@ XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6に対応した、3列×4行キーマ�
 - XIAO ESP32S3／ESP32C3／ESP32C5／ESP32C6対応
 - 3列×4行、12キーのマトリクス入力
 - ロータリーエンコーダー回転およびプッシュ入力
-- KeyのPress / ReleaseおよびSequence
+- KeyのPress / ReleaseおよびSequence（Loop／Ping-Pong）
 - Encoder Rotationの回転量／回転方向モード
 - Encoder PushのPress / ReleaseおよびSequence
 - OSC送信先、OSC Address、型、値の設定
