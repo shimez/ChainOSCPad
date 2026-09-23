@@ -181,12 +181,30 @@ void sendButton(ButtonInputSetting& setting, bool pressed) {
     if (!sendMappedValue(sequence.address, sequence.current, sequence.type)) {
       return;
     }
-    float next = sequence.current + sequence.step;
-    if ((sequence.step >= 0 && next > sequence.end + 1e-6f) ||
-        (sequence.step < 0 && next < sequence.end - 1e-6f)) {
-      next = sequence.start;
+    if (sequence.progressionMode == SequenceProgressionMode::PingPong) {
+      if (sequence.start != sequence.end) {
+        if (sequence.direction == SequenceDirection::Forward) {
+          const float next = sequence.current + sequence.step;
+          if (sequence.step > 0 ? next >= sequence.end : next <= sequence.end) {
+            sequence.current = sequence.end;
+            sequence.direction = SequenceDirection::Backward;
+          } else sequence.current = next;
+        } else {
+          const float next = sequence.current - sequence.step;
+          if (sequence.step > 0 ? next <= sequence.start : next >= sequence.start) {
+            sequence.current = sequence.start;
+            sequence.direction = SequenceDirection::Forward;
+          } else sequence.current = next;
+        }
+      }
+    } else {
+      float next = sequence.current + sequence.step;
+      if ((sequence.step >= 0 && next > sequence.end + 1e-6f) ||
+          (sequence.step < 0 && next < sequence.end - 1e-6f)) {
+        next = sequence.start;
+      }
+      sequence.current = next;
     }
-    sequence.current = next;
     return;
   }
   OscMessageSetting* messages = pressed ? setting.pressMessages

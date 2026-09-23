@@ -139,6 +139,16 @@ namespace
 #define row legacyRow
 #define buttonEditor legacyButtonEditor
 #define head legacyHead
+  String progressionHtml(const String &prefix, const SequenceSetting &sequence)
+  {
+    const bool ping = sequence.progressionMode == SequenceProgressionMode::PingPong;
+    return "<div class='sequence-progression'><label>" + String(tr("Progression Mode", "進行モード")) +
+           "<select name='" + prefix + "seq_progression' onchange=\"this.closest('.sequence-progression').querySelectorAll('.progression-description').forEach((p,i)=>p.hidden=i!=this.selectedIndex)\">" +
+           "<option value='0'" + (ping ? "" : " selected") + ">" + tr("↻ Loop", "↻ ループ") + "</option>" +
+           "<option value='1'" + (ping ? " selected" : "") + ">" + tr("↔ Ping-Pong", "↔ 往復") + "</option></select></label>" +
+           "<p class='progression-description'" + (ping ? " hidden" : "") + ">" + tr("Move from Start by Step and return to Start after End.", "開始値から増減量ずつ進み、終了値を超えると開始値へ戻ります。") + "</p>" +
+           "<p class='progression-description'" + (ping ? "" : " hidden") + ">" + tr("Move from Start to End by Step and reverse at both ends.", "開始値から終了値まで増減量ずつ進み、両端で折り返します。") + "</p></div>";
+  }
   String row(const String &prefix, const char *event, uint8_t i, const OscMessageSetting &m)
   {
     String p = prefix + (String(event) == "press" ? "p" : "r");
@@ -156,7 +166,7 @@ namespace
     for (uint8_t i = 0; i < b.releaseMessageCount; ++i)
       h += row(prefix, "release", i, b.releaseMessages[i]);
     h += "</div><button type='button' class='add' onclick=\"addMsg(this,'release')\"" + String(full ? " disabled" : "") + ">+ OSCメッセージを追加</button></div></div>";
-    h += "<div id='seq-" + g + "' class='sequence' style='display:" + String(b.mode == INPUT_MODE_SEQUENCE ? "block" : "none") + "'><h3>" + seqTitle + "</h3><p>開始値から増減量ずつ進み、終了値を超えると開始値へ戻ります。</p><div class='seqgrid'><label>OSCアドレス<input maxlength='192' required name='" + prefix + "seq_address' value='" + esc(b.sequence.address) + "'></label><label>開始値<input type='number' step='any' required name='" + prefix + "seq_start' value='" + String(b.sequence.start, 7) + "'></label><label>終了値<input type='number' step='any' required name='" + prefix + "seq_end' value='" + String(b.sequence.end, 7) + "'></label><label>増減量<input type='number' step='any' required name='" + prefix + "seq_step' value='" + String(b.sequence.step, 7) + "'></label><label>型" + types(prefix + "seq_type", b.sequence.type) + "</label></div></div>";
+    h += "<div id='seq-" + g + "' class='sequence' style='display:" + String(b.mode == INPUT_MODE_SEQUENCE ? "block" : "none") + "'><h3>" + seqTitle + "</h3><div class='seqgrid'><label>OSCアドレス<input maxlength='192' required name='" + prefix + "seq_address' value='" + esc(b.sequence.address) + "'></label><label>開始値<input type='number' step='any' required name='" + prefix + "seq_start' value='" + String(b.sequence.start, 7) + "'></label><label>終了値<input type='number' step='any' required name='" + prefix + "seq_end' value='" + String(b.sequence.end, 7) + "'></label><label>増減量<input type='number' step='any' required name='" + prefix + "seq_step' value='" + String(b.sequence.step, 7) + "'></label><label>型" + types(prefix + "seq_type", b.sequence.type) + "</label></div>" + progressionHtml(prefix,b.sequence) + "</div>";
     return h;
   }
 
@@ -235,7 +245,7 @@ document.addEventListener('DOMContentLoaded',()=>{const form=document.getElement
     for (uint8_t i = 0; i < b.releaseMessageCount; ++i)
       h += row(prefix, "release", i, b.releaseMessages[i]);
     h += "</div><button type='button' class='add' onclick=\"addMsg(this,'release')\"" + String(full ? " disabled" : "") + ">+ " + tr("Add OSC Message", "OSCメッセージを追加") + "</button></div></div>";
-    h += "<div id='seq-" + g + "' class='sequence' style='display:" + String(b.mode == INPUT_MODE_SEQUENCE ? "block" : "none") + "'><h3>" + seqTitle + "</h3><p>" + tr("Advance by Step from Start to End, then return to Start.", "開始値から増減量ずつ進み、終了値を超えると開始値へ戻ります。") + "</p><div class='seqgrid'><label class='seq-address'>" + tr("OSC Address", "OSCアドレス") + "<input maxlength='192' required name='" + prefix + "seq_address' value='" + esc(b.sequence.address) + "'></label><label>" + tr("Start", "開始値") + "<input type='number' step='any' required name='" + prefix + "seq_start' value='" + String(b.sequence.start, 7) + "'></label><label>" + tr("End", "終了値") + "<input type='number' step='any' required name='" + prefix + "seq_end' value='" + String(b.sequence.end, 7) + "'></label><label>" + tr("Step", "増減量") + "<input type='number' step='any' required name='" + prefix + "seq_step' value='" + String(b.sequence.step, 7) + "'></label><label>" + tr("Type", "型") + types(prefix + "seq_type", b.sequence.type) + "</label></div></div>";
+    h += "<div id='seq-" + g + "' class='sequence' style='display:" + String(b.mode == INPUT_MODE_SEQUENCE ? "block" : "none") + "'><h3>" + seqTitle + "</h3><div class='seqgrid'><label class='seq-address'>" + tr("OSC Address", "OSCアドレス") + "<input maxlength='192' required name='" + prefix + "seq_address' value='" + esc(b.sequence.address) + "'></label><label>" + tr("Start", "開始値") + "<input type='number' step='any' required name='" + prefix + "seq_start' value='" + String(b.sequence.start, 7) + "'></label><label>" + tr("End", "終了値") + "<input type='number' step='any' required name='" + prefix + "seq_end' value='" + String(b.sequence.end, 7) + "'></label><label>" + tr("Step", "増減量") + "<input type='number' step='any' required name='" + prefix + "seq_step' value='" + String(b.sequence.step, 7) + "'></label><label>" + tr("Type", "型") + types(prefix + "seq_type", b.sequence.type) + "</label></div>" + progressionHtml(prefix,b.sequence) + "</div>";
     if (encoder) h += "<div id='reset-" + g + "' class='encoder-reset-value' style='display:" + String(b.mode == INPUT_MODE_ROTATION_RESET ? "block" : "none") + "'><label>" + tr("Reset Value", "リセット値") + "<input maxlength='128' name='" + prefix + "reset_value' value='" + esc(resetValue) + "'></label></div>";
     return h;
   }
@@ -276,9 +286,13 @@ document.addEventListener('DOMContentLoaded',()=>{const form=document.getElement
     ok = inputParseFloat(server.arg(prefix + "seq_start"), b.sequence.start) && ok;
     ok = inputParseFloat(server.arg(prefix + "seq_end"), b.sequence.end) && ok;
     ok = inputParseFloat(server.arg(prefix + "seq_step"), b.sequence.step) && ok;
+    const String progression = server.arg(prefix + "seq_progression");
+    if (progression != "" && progression != "0" && progression != "1") return false;
+    b.sequence.progressionMode = progression == "1" ? SequenceProgressionMode::PingPong : SequenceProgressionMode::Loop;
     if (!ok || (!encoder && !inputButtonSettingValid(b)))
       return false;
     b.sequence.current = b.sequence.start;
+    b.sequence.direction = SequenceDirection::Forward;
     return true;
   }
   bool parseKey(uint8_t index, KeyInputSetting &s)
@@ -557,7 +571,7 @@ document.addEventListener('DOMContentLoaded',()=>{const form=document.getElement
       return;
     }
     const int presetSchema = root["schemaVersion"] | -1;
-    if (presetSchema != INPUT_JSON_SCHEMA_VERSION && !(presetSchema == DEVICE_PRESET_V2_SCHEMA_VERSION && (root["deviceType"] | -1) == CHAIN_ENCODER_DEVICE_TYPE))
+    if (presetSchema != INPUT_JSON_SCHEMA_VERSION && presetSchema != DEVICE_PRESET_PINGPONG_SCHEMA_VERSION && !(presetSchema == DEVICE_PRESET_V2_SCHEMA_VERSION && (root["deviceType"] | -1) == CHAIN_ENCODER_DEVICE_TYPE))
     {
       server.send(400, "text/plain; charset=utf-8", tr("E_PRESET_SCHEMA_UNSUPPORTED: The preset `schemaVersion` is missing or unsupported. Use a preset exported by a compatible product version.", "E_PRESET_SCHEMA_UNSUPPORTED: プリセットの`schemaVersion`がないか、対応していません。対応するバージョンの製品からエクスポートしたプリセットを使用してください。"));
       return;

@@ -4,6 +4,8 @@
 
 constexpr uint8_t MAX_OSC_MESSAGES = 8;
 enum OscValueType : uint8_t { OSC_TYPE_FLOAT=0, OSC_TYPE_INT=1, OSC_TYPE_STRING=2 };
+enum class SequenceProgressionMode : uint8_t { Loop=0, PingPong=1 };
+enum class SequenceDirection : uint8_t { Forward, Backward };
 enum InputMode : uint8_t { INPUT_MODE_PRESS_RELEASE=0, INPUT_MODE_SEQUENCE=1, INPUT_MODE_ROTATION_RESET=2 };
 enum EncoderRotationMode : uint8_t {
   ENCODER_ROTATION_AMOUNT=0,
@@ -15,7 +17,7 @@ enum EncoderSettingsModel : uint8_t {
 };
 
 struct OscMessageSetting { String address; String value; OscValueType type=OSC_TYPE_FLOAT; };
-struct SequenceSetting { String address="/sequence"; OscValueType type=OSC_TYPE_FLOAT; float start=0, end=10, step=1, current=0; };
+struct SequenceSetting { String address="/sequence"; OscValueType type=OSC_TYPE_FLOAT; float start=0, end=10, step=1, current=0; SequenceProgressionMode progressionMode=SequenceProgressionMode::Loop; SequenceDirection direction=SequenceDirection::Forward; };
 struct ButtonInputSetting {
   InputMode mode=INPUT_MODE_PRESS_RELEASE;
   OscMessageSetting pressMessages[MAX_OSC_MESSAGES];

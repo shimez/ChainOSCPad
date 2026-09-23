@@ -31,7 +31,7 @@ bool validateKeyFields(JsonObjectConst root, JsonObjectConst key,
                                           "sequence"};
   static const char* const messageFields[] = {"address", "value", "type"};
   static const char* const sequenceFields[] = {"address", "type", "start",
-                                               "end", "step"};
+                                               "end", "step", "progressionMode"};
   if (!onlyFields(root, rootFields, 5) || !onlyFields(key, keyFields, 4))
     return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
   for (JsonVariantConst item : key["press"].as<JsonArrayConst>())
@@ -40,7 +40,7 @@ bool validateKeyFields(JsonObjectConst root, JsonObjectConst key,
   for (JsonVariantConst item : key["release"].as<JsonArrayConst>())
     if (!onlyFields(item.as<JsonObjectConst>(), messageFields, 3))
       return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
-  if (!onlyFields(key["sequence"].as<JsonObjectConst>(), sequenceFields, 5))
+  if (!onlyFields(key["sequence"].as<JsonObjectConst>(), sequenceFields, 6))
     return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
   return true;
 }
@@ -124,6 +124,11 @@ bool validateSequence(JsonObjectConst object, bool legacy, String& error) {
   if (!object["start"].is<float>() || !object["end"].is<float>() ||
       !object["step"].is<float>())
     return fail(error, "E_SEQUENCE_VALUE_INVALID");
+  if (object.containsKey("progressionMode") &&
+      (!object["progressionMode"].is<int>() ||
+       object["progressionMode"].as<int>() < 0 ||
+       object["progressionMode"].as<int>() > 1))
+    return fail(error, "E_PRESET_DEVICE_SETTING_INVALID");
   if (!validPresetAddress(object["address"].as<const char*>(), error))
     return false;
   const int type = object["type"].as<int>();
@@ -311,7 +316,8 @@ String sequenceJson(const SequenceSetting& sequence) {
          ",\"type\":" + String(static_cast<int>(sequence.type)) +
          ",\"start\":" + String(sequence.start, 6) +
          ",\"end\":" + String(sequence.end, 6) +
-         ",\"step\":" + String(sequence.step, 6) + "}";
+         ",\"step\":" + String(sequence.step, 6) +
+          ",\"progressionMode\":" + String(static_cast<int>(sequence.progressionMode)) + "}";
 }
 
 String buttonJson(const ButtonInputSetting& button) {
@@ -362,6 +368,14 @@ bool jsonSequence(JsonObjectConst object, SequenceSetting& sequence,
   sequence.start = object["start"].as<float>();
   sequence.end = object["end"].as<float>();
   sequence.step = object["step"].as<float>();
+  if (object.containsKey("progressionMode") &&
+      (!object["progressionMode"].is<int>() ||
+       object["progressionMode"].as<int>() < 0 ||
+       object["progressionMode"].as<int>() > 1)) {
+    error = "E_PRESET_DEVICE_SETTING_INVALID";
+    return false;
+  }
+  sequence.progressionMode = static_cast<SequenceProgressionMode>(object["progressionMode"] | 0);
   if (type < OSC_TYPE_FLOAT || type > OSC_TYPE_STRING) {
     error = "Sequence values are invalid.";
     return false;
@@ -386,6 +400,7 @@ bool jsonSequence(JsonObjectConst object, SequenceSetting& sequence,
     return false;
   }
   sequence.current = sequence.start;
+  sequence.direction = SequenceDirection::Forward;
   return true;
 }
 
@@ -457,7 +472,10 @@ bool inputValidateDevicePreset(JsonObjectConst root, int expectedDeviceType,
     const JsonObjectConst encoder = root["encoder"].as<JsonObjectConst>();
     if (encoder.isNull()) return fail(error, "E_PRESET_FIELD_TYPE_INVALID");
     if ((root["schemaVersion"] | INPUT_JSON_SCHEMA_VERSION) ==
-        DEVICE_PRESET_V2_SCHEMA_VERSION)
+            DEVICE_PRESET_V2_SCHEMA_VERSION ||
+        ((root["schemaVersion"] | INPUT_JSON_SCHEMA_VERSION) ==
+             DEVICE_PRESET_PINGPONG_SCHEMA_VERSION &&
+         encoder["rotationMode"].is<const char*>()))
       return validateEncoderV2(encoder, error);
     static const char* const required[] = {
         "rotationAddress", "sendIncrement", "absoluteInputMin",
@@ -541,7 +559,7 @@ String inputKeyJson(const KeyInputSetting& setting, uint8_t index,
               ",\"builtIn\":true";
   } else {
     output += String("\"format\":") + inputJsonQuote(CHAINOSC_PRESET_FORMAT) +
-              ",\"schemaVersion\":1,\"deviceType\":3," +
+              ",\"schemaVersion\":" + String(DEVICE_PRESET_PINGPONG_SCHEMA_VERSION) + ",\"deviceType\":3," +
               "\"deviceTypeName\":\"Key\"";
   }
   output += ",\"key\":" + buttonJson(setting.button) + "}";
@@ -558,7 +576,7 @@ String inputEncoderJson(const EncoderInputSetting& setting,
               ",\"builtIn\":true";
   } else {
     output += String("\"format\":") + inputJsonQuote(CHAINOSC_PRESET_FORMAT) +
-              ",\"schemaVersion\":2,\"deviceType\":1," +
+              ",\"schemaVersion\":" + String(DEVICE_PRESET_PINGPONG_SCHEMA_VERSION) + ",\"deviceType\":1," +
               "\"deviceTypeName\":\"Encoder\"";
   }
   output += String(",\"encoder\":{\"rotationAddress\":") +
@@ -620,7 +638,7 @@ bool inputEncoderPresetJson(const EncoderInputSetting& setting,
 
   const LegacyEncoderRotationSetting& legacy = setting.legacy;
   output = String("{\"format\":") + inputJsonQuote(CHAINOSC_PRESET_FORMAT) +
-           ",\"schemaVersion\":1,\"deviceType\":1," +
+           ",\"schemaVersion\":" + String(DEVICE_PRESET_PINGPONG_SCHEMA_VERSION) + ",\"deviceType\":1," +
            "\"deviceTypeName\":\"Encoder\",\"encoder\":{" +
            "\"rotationAddress\":" + inputJsonQuote(setting.rotationAddress) +
            ",\"sendIncrement\":" +
